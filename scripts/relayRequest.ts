@@ -76,6 +76,14 @@ async function main() {
     let gatewaysAddress = gatewaysContract.target;
     console.log("CommonChainGateways Deployed address: ", gatewaysAddress);
 
+    await gatewaysContract.addChainGlobal(
+        [31337],
+        [
+            {
+                contractAddress : svls_addr,
+                rpcUrl : "http://127.0.0.1:8545/"
+            }
+        ]);
     // Common Chain Executors Contract
     const CommonChainExecutors = await ethers.getContractFactory("CommonChainExecutors");
     console.log("Deploying CommonChainExecutors...")

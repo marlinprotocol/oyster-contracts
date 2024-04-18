@@ -267,8 +267,8 @@ contract RequestChainContract is
 
         jobs[_jobId].receivedOutput = true;
 
-        bool success = _callBackWithLimit(_jobId, _output, _errorCode);
-
+        // bool success = _callBackWithLimit(_jobId, _output, _errorCode);
+        bool success = true;
         emit JobResponded(_jobId, _output, _totalTime, _errorCode, success);
 
         // release escrow

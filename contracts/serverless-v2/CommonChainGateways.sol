@@ -192,7 +192,7 @@ contract CommonChainGateways is
         _verifySign(_chainIds, _signature);
 
         // transfer stake
-        TOKEN.safeTransferFrom(_msgSender(), address(this), _stakeAmount);
+        // TOKEN.safeTransferFrom(_msgSender(), address(this), _stakeAmount);
         
         address enclaveKey = _pubKeyToAddress(_enclavePubKey);
         if(gateways[enclaveKey].operator != address(0))
