@@ -70,7 +70,7 @@ async function main() {
                 av_addr,
                 1000,
                 token_addr,
-                1000
+                1
             ]
         });
     let gatewaysAddress = gatewaysContract.target;
@@ -81,9 +81,11 @@ async function main() {
         [
             {
                 contractAddress : svls_addr,
-                rpcUrl : "http://127.0.0.1:8545/"
+                httpRpcUrl : "http://127.0.0.1:8545/",
+                wsRpcUrl : "ws://127.0.0.1:8545/"
             }
         ]);
+    // console.log(await gatewaysContract.requestChains(31337));
     // Common Chain Executors Contract
     const CommonChainExecutors = await ethers.getContractFactory("CommonChainExecutors");
     console.log("Deploying CommonChainExecutors...")
@@ -106,7 +108,7 @@ async function main() {
     console.log("CommonChainExecutors Deployed address: ", executorsAddress);
 
     let relayBufferTime = 100,
-        executionBufferTime = 100,
+        executionBufferTime = 10,
         noOfNodesToSelect = 3;
     // Common Chain Jobs Contract
     const CommonChainJobs = await ethers.getContractFactory("CommonChainJobs");

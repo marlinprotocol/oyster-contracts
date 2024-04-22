@@ -16,7 +16,11 @@ export default {
       accounts: {
         count: 50
       },
-      allowBlocksWithSameTimestamp: true,
+      allowBlocksWithSameTimestamp: false,
+      mining: {
+        auto: true,
+	      interval: [3000, 6000],
+      },
     },
     eth: {
       url: `https://mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,

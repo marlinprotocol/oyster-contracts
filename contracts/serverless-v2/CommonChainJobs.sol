@@ -10,6 +10,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./CommonChainExecutors.sol";
 import "./CommonChainGateways.sol";
+import "hardhat/console.sol";
 
 contract CommonChainJobs is
     Initializable, // initializer
@@ -199,8 +200,15 @@ contract CommonChainJobs is
             revert UnsupportedChain();
 
         // signature check
-        bytes32 digest = keccak256(
-            abi.encodePacked(
+        console.log("Job ID: ", _jobId);
+        console.log(_reqChainId);
+        console.logBytes32(_codehash);
+        console.logBytes(_codeInputs);
+        console.log(_deadline);
+        console.log(_jobRequestTimestamp);
+        console.log(_sequenceId);
+        console.log(_jobOwner);
+        bytes memory prehash = abi.encodePacked(
                 _jobId,
                 _reqChainId,
                 _codehash,
@@ -209,23 +217,27 @@ contract CommonChainJobs is
                 _jobRequestTimestamp,
                 _sequenceId,
                 _jobOwner
-            )
+            );
+        bytes32 digest = keccak256(
+            prehash
         );
+        console.logBytes(prehash);
+        console.logBytes32(digest);
         address signer = digest.recover(_signature);
 
         gateways.allowOnlyVerified(signer);
 
         // Executor selection not required while testing gateway
-        // address[] memory selectedNodes = executors.selectExecutors(NO_OF_NODES_TO_SELECT);
-        // // if no executors are selected, then mark isRosourceAvailable flag of the job and exit
-        // if(selectedNodes.length < NO_OF_NODES_TO_SELECT) {
-        //     jobs[key].isResourceUnavailable = true;
-        //     emit JobResourceUnavailable(_jobId, _reqChainId, _msgSender());
-        //     return;
-        // }
-        // selectedExecutors[key] = selectedNodes;
+        address[] memory selectedNodes = executors.selectExecutors(NO_OF_NODES_TO_SELECT);
+        // if no executors are selected, then mark isRosourceAvailable flag of the job and exit
+        if(selectedNodes.length < NO_OF_NODES_TO_SELECT) {
+            jobs[key].isResourceUnavailable = true;
+            emit JobResourceUnavailable(_jobId, _reqChainId, _msgSender());
+            return;
+        }
+        selectedExecutors[key] = selectedNodes;
 
-        address[] memory selectedNodes;
+        // address[] memory selectedNodes;
         jobs[key] = Job({
             jobId: _jobId,
             reqChainId: _reqChainId,
@@ -252,24 +264,24 @@ contract CommonChainJobs is
     ) external {
         uint256 key = getKey(_jobId, _reqChainId);
         // Commented checks and operation not required for gw testing
-        // if(block.timestamp > jobs[key].execStartTime + jobs[key].deadline + EXECUTION_BUFFER_TIME)
-        //     revert ExecutionTimeOver();
+        if(block.timestamp > jobs[key].execStartTime + jobs[key].deadline + EXECUTION_BUFFER_TIME)
+            revert ExecutionTimeOver();
 
-        // // signature check
-        // bytes32 digest = keccak256(
-        //     abi.encodePacked(_jobId, _reqChainId, _output, _totalTime, _errorCode)
-        // );
-        // address signer = digest.recover(_signature);
+        // signature check
+        bytes32 digest = keccak256(
+            abi.encodePacked(_jobId, _reqChainId, _output, _totalTime, _errorCode)
+        );
+        address signer = digest.recover(_signature);
 
-        // executors.allowOnlyVerified(signer);
+        executors.allowOnlyVerified(signer);
 
-        // if(!isJobExecutor(_jobId, _reqChainId, signer))
-        //     revert NotSelectedExecutor();
-        // if(hasExecutedJob[key][signer])
-        //     revert ExecutorAlreadySubmittedOutput();
+        if(!isJobExecutor(_jobId, _reqChainId, signer))
+            revert NotSelectedExecutor();
+        if(hasExecutedJob[key][signer])
+            revert ExecutorAlreadySubmittedOutput();
 
-        // executors.updateOnSubmitOutput(signer);
-        // hasExecutedJob[key][signer] = true;
+        executors.updateOnSubmitOutput(signer);
+        hasExecutedJob[key][signer] = true;
 
         // TODO: emit executorKey(signer) also if reqd
         emit JobResponded(_jobId, _reqChainId, _output, _totalTime, _errorCode, ++jobs[key].outputCount);

@@ -179,7 +179,7 @@ contract CommonChainExecutors is
         _allowOnlyVerified(signer);
 
         // transfer stake
-        TOKEN.safeTransferFrom(_msgSender(), address(this), _stakeAmount);
+        // TOKEN.safeTransferFrom(_msgSender(), address(this), _stakeAmount);
 
         address enclaveKey = _pubKeyToAddress(_enclavePubKey);
         if(executors[enclaveKey].operator != address(0))
