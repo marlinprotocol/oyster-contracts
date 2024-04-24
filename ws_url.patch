@@ -1,0 +1,33 @@
+diff --git a/contracts/serverless-v2/CommonChainGateways.sol b/contracts/serverless-v2/CommonChainGateways.sol
+index cfd81d0..ccdc125 100644
+--- a/contracts/serverless-v2/CommonChainGateways.sol
++++ b/contracts/serverless-v2/CommonChainGateways.sol
+@@ -95,7 +95,8 @@ contract CommonChainGateways is
+ 
+     struct RequestChain {
+         address contractAddress;
+-        string rpcUrl;
++        string httpRpcUrl;
++        string wsRpcUrl;
+     }
+ 
+     mapping(uint256 => RequestChain) public requestChains;
+@@ -143,7 +144,8 @@ contract CommonChainGateways is
+     event ChainAddedGlobal(
+         uint256 chainId,
+         address contractAddress,
+-        string rpcUrl
++        string httpRpcUrl,
++        string wsRpcUrl
+     );
+ 
+     event ChainRemovedGlobal(
+@@ -293,7 +295,7 @@ contract CommonChainGateways is
+             uint256 chainId = _chainIds[index];
+             requestChains[chainId] = reqChain;
+ 
+-            emit ChainAddedGlobal(chainId, reqChain.contractAddress, reqChain.rpcUrl);
++            emit ChainAddedGlobal(chainId, reqChain.contractAddress, reqChain.httpRpcUrl, reqChain.wsRpcUrl);
+         }
+     }
+ 

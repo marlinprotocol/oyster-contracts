@@ -2,6 +2,7 @@ import { getBytes } from "ethers";
 import { ethers, upgrades } from "hardhat";
 
 async function main() {
+    console.log(await ethers.getSigners());
     //Create Enclave Image object
     const img = {
         PCR0 : getBytes("0xcfa7554f87ba13620037695d62a381a2d876b74c2e1b435584fe5c02c53393ac1c5cd5a8b6f92e866f9a65af751e0462"),
@@ -10,7 +11,7 @@ async function main() {
     };
     let enclavePubKey = "0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed753547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5";
     // Admin address
-    let admin_addr = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";
+    let admin_addr = "0x0A6f4582b04aBb0aaD587d39B52e769A569A6856";
     // Deploy Token Contract
     let token_addr = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";
 

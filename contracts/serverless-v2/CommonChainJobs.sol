@@ -10,7 +10,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./CommonChainExecutors.sol";
 import "./CommonChainGateways.sol";
-import "hardhat/console.sol";
+// import "hardhat/console.sol";
 
 contract CommonChainJobs is
     Initializable, // initializer
@@ -200,14 +200,14 @@ contract CommonChainJobs is
             revert UnsupportedChain();
 
         // signature check
-        console.log("Job ID: ", _jobId);
-        console.log(_reqChainId);
-        console.logBytes32(_codehash);
-        console.logBytes(_codeInputs);
-        console.log(_deadline);
-        console.log(_jobRequestTimestamp);
-        console.log(_sequenceId);
-        console.log(_jobOwner);
+        // console.log("Job ID: ", _jobId);
+        // console.log(_reqChainId);
+        // console.logBytes32(_codehash);
+        // console.logBytes(_codeInputs);
+        // console.log(_deadline);
+        // console.log(_jobRequestTimestamp);
+        // console.log(_sequenceId);
+        // console.log(_jobOwner);
         bytes memory prehash = abi.encodePacked(
                 _jobId,
                 _reqChainId,
@@ -221,8 +221,8 @@ contract CommonChainJobs is
         bytes32 digest = keccak256(
             prehash
         );
-        console.logBytes(prehash);
-        console.logBytes32(digest);
+        // console.logBytes(prehash);
+        // console.logBytes32(digest);
         address signer = digest.recover(_signature);
 
         gateways.allowOnlyVerified(signer);
