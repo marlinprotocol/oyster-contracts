@@ -9,11 +9,32 @@ async function main() {
         PCR2 : getBytes("0x20caae8a6a69d9b1aecdf01a0b9c5f3eafd1f06cb51892bf47cef476935bfe77b5b75714b68a69146d650683a217c5b3"),
     };
     let enclavePubKey = "0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed753547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5";
+    
     // Admin address
-    let admin_addr = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";
+    let signers = await ethers.getSigners();
+    let admin_addr = await signers[0].getAddress();
+    
     // Deploy Token Contract
-    let token_addr = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";
+    const Pond = await ethers.getContractFactory("Pond");
+    let staking_token = await upgrades.deployProxy(Pond, ["Marlin", "POND"], {
+        kind: "uups",
+    });
+    let staking_token_addr = staking_token.target;
 
+    const USDCoin = await ethers.getContractFactory("USDCoin");
+    let usdc_token = await upgrades.deployProxy(USDCoin, [admin_addr], {
+        kind: "uups",
+    });
+
+    let usdc_token_addr = usdc_token.target;
+    
+    const executorFeePerMs = 1; // 0.001 usd per ms
+    const stakingRewardPerMs = 1; // 0.001 usd per ms
+    const executionFeePerMs = executorFeePerMs + stakingRewardPerMs; 
+    const gatewayFee = 100; // 0.1 usd
+    const stakingPaymentPoolAddress = await signers[1].getAddress();
+    const usdcPaymentPoolAddress = await signers[1].getAddress();
+    const signMaxAge = 600;
     // Attestation Verifier
     const AttestationVerifier = await ethers.getContractFactory("AttestationVerifier");
     console.log("Deploying AttestationVerifier")
@@ -31,10 +52,13 @@ async function main() {
     console.log("AttestationVerifier Deployed address: ", av_addr);
 
     // Request Chain Relay Contract
-    const ServerlessRelay = await ethers.getContractFactory("Relay");
+    let overallTimeout = 120;
+    let minUserDeadline = 1000;
+    let maxUserDeadline = 50000;
+    const Relay = await ethers.getContractFactory("Relay");
     console.log("Deploying Relay...")
-    let serverlessrelay = await upgrades.deployProxy(
-        ServerlessRelay,
+    let relay = await upgrades.deployProxy(
+        Relay,
         [
             admin_addr,
             [img]
@@ -44,17 +68,20 @@ async function main() {
             kind : "uups",
             constructorArgs : [
                 av_addr,
-                1000,
-                token_addr,
-                1000,
-                10000,
-                20000
+                signMaxAge,
+                usdc_token_addr,
+                minUserDeadline,
+                maxUserDeadline,
+                overallTimeout,
+                executionFeePerMs,
+                gatewayFee
             ]
         });
-    let svls_addr = serverlessrelay.target;
-    console.log("ServerlessRelay Deployed address: ", svls_addr);
+    let relay_addr = relay.target;
+    console.log("ServerlessRelay Deployed address: ", relay_addr);
 
     // Common Chain Gateways Contract
+    let epochInterval = 600;
     const Gateways = await ethers.getContractFactory("Gateways");
     console.log("Deploying Gateways...")
     let gatewaysContract = await upgrades.deployProxy(
@@ -68,15 +95,19 @@ async function main() {
             kind : "uups",
             constructorArgs : [
                 av_addr,
-                1000,
-                token_addr,
-                1000
+                signMaxAge,
+                staking_token_addr,
+                epochInterval + overallTimeout,
+                100, // 0.01 %
+                1000000
             ]
         });
+
     let gatewaysAddress = gatewaysContract.target;
     console.log("Gateways Deployed address: ", gatewaysAddress);
-
+    
     // Common Chain Executors Contract
+    let minStake = 10n**18n;
     const Executors = await ethers.getContractFactory("Executors");
     console.log("Deploying Executors...")
     let executorsContract = await upgrades.deployProxy(
@@ -90,15 +121,17 @@ async function main() {
             kind : "uups",
             constructorArgs : [
                 av_addr,
-                1000,
-                token_addr
+                signMaxAge,
+                staking_token_addr,
+                minStake,
+                100, // 0.01 %
+                1000000
             ]
         });
     let executorsAddress = executorsContract.target;
     console.log("Executors Deployed address: ", executorsAddress);
 
-    let relayBufferTime = 100,
-        executionBufferTime = 100,
+    let executionBufferTime = 60,
         noOfNodesToSelect = 3;
     // Common Chain Jobs Contract
     const Jobs = await ethers.getContractFactory("Jobs");
@@ -107,23 +140,55 @@ async function main() {
         Jobs,
         [
             admin_addr,
-            gatewaysAddress,
-            executorsAddress,
         ],
         {
             initializer : "initialize",
             kind : "uups",
             constructorArgs: [
-                token_addr,
-                relayBufferTime,
+                staking_token_addr,
+                usdc_token_addr,
+                signMaxAge,
                 executionBufferTime,
-                noOfNodesToSelect
+                noOfNodesToSelect,
+                1,
+                1,
+                stakingPaymentPoolAddress,
+                usdcPaymentPoolAddress,
+                executorsAddress
             ]
         });
     let jobsAddress = jobsContract.target;
     console.log("Jobs Deployed address: ", jobsAddress);
+    await executorsContract.grantRole(await executorsContract.JOBS_ROLE(), jobsAddress);
 
-    await executorsContract.setJobsContract(jobsAddress);
+     // Common Chain Gateway Jobs Contract
+     let relayBufferTime = 120;
+     const GatewayJobs = await ethers.getContractFactory("GatewayJobs");
+     console.log("Deploying GatewayJobs...")
+     let gatewayJobs = await upgrades.deployProxy(
+         GatewayJobs,
+         [
+             admin_addr
+         ],
+         {
+             initializer : "initialize",
+             kind : "uups",
+             constructorArgs : [
+                 staking_token_addr,
+                 usdc_token_addr,
+                 signMaxAge,
+                 relayBufferTime,
+                 executionFeePerMs,
+                 10n**16n, // 0.01 POND
+                 10n**16n, // 0.01 POND
+                 jobsAddress,
+                 gatewaysAddress,
+                 stakingPaymentPoolAddress
+             ]
+         });
+    let gatewayJobsAddress = gatewayJobs.target;
+    console.log("GatewayJobs Deployed address: ", gatewayJobsAddress);
+    await gatewaysContract.grantRole(await gatewaysContract.GATEWAY_JOBS_ROLE(), gatewayJobsAddress);
 }
 
 main()
