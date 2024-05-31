@@ -245,6 +245,7 @@ contract Relay is
         uint256 startTime
     );
 
+
     event JobResponded(uint256 indexed jobId, bytes output, uint256 totalTime, uint256 errorCode, bool success);
 
     event JobCancelled(uint256 indexed jobId);
@@ -402,7 +403,7 @@ contract Relay is
         uint8 _errorCode
     ) internal returns (bool, uint) {
         uint startGas = gasleft();
-        (bool success, ) = _callbackContract.call{gas: (_callbackDeposit / tx.gasprice)}(
+        (bool success, ) = _callbackContract.call(
             abi.encodeWithSignature(
                 "oysterResultCall(uint256,address,bytes32,bytes,bytes,uint8)",
                 _jobId, _jobOwner, _codehash, _codeInputs, _output, _errorCode
@@ -411,7 +412,6 @@ contract Relay is
 
         // calculate callback cost
         uint callbackCost = (startGas - gasleft()) * tx.gasprice;
-
         return (success, callbackCost);
     }
 

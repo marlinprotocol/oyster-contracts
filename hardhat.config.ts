@@ -122,6 +122,11 @@ export default {
   },
   gasReporter: {
     enabled: process.env?.GAS_REPORTER?.toLowerCase() == "true"
+  },
+  sourcify: {
+    // Disabled by default
+    // Doesn't need an API key
+    enabled: true
   }
 };
 
