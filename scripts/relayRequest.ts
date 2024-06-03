@@ -35,8 +35,8 @@ async function main() {
     const stakingRewardPerMs = 1; // 0.001 usd per ms
     const executionFeePerMs = executorFeePerMs + stakingRewardPerMs; 
     const gatewayFee = 100; // 0.1 usd
-    const stakingPaymentPoolAddress = await signers[1].getAddress();
-    const usdcPaymentPoolAddress = await signers[1].getAddress();
+    const stakingPaymentPoolAddress = await signers[0].getAddress();
+    const usdcPaymentPoolAddress = await signers[0].getAddress();
     const signMaxAge = 600;
     // Attestation Verifier
     const AttestationVerifier = await ethers.getContractFactory("AttestationVerifier");
@@ -210,3 +210,16 @@ main()
         console.error(error);
         process.exit(1);
     });
+
+/*
+    ARBITRUM SEPOLIA -
+    Attestation Verifer Enclave Private Key:  0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+    POND Deployed address: 0xA172C4F18b423801E94F9FbB9d4065831Ef4d575
+    USDC Deployed address: 0xA9B0A14b99d0e4F42a0c6433a42c671A6B1E74Aa
+    AttestationVerifier Deployed address:  0xfF27c9A6a878A018FAaD0511fAf870F09C6b79a1
+    ServerlessRelay Deployed address:  0x187b8Aed16CA0ee242831f1bAcd5Aa88e3478C64
+    Gateways Deployed address:  0x271437C9B2069F13Cc197B9e12A02ED276ae3A85
+    Executors Deployed address:  0xc58Ffc9bfCc846E56Eeb9AaE5aBFAD00393a19C5
+    Jobs Deployed address:  0xaba049A974a331A3b450FB8263710Ad140f64E4F
+    GatewayJobs Deployed address:  0x8E26289186BEA242094611aE1dDa0A2F29587ce8
+*/
