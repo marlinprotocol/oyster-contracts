@@ -215,7 +215,8 @@ main()
     ARBITRUM SEPOLIA -
     Attestation Verifer Enclave Private Key:  0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
     POND Deployed address: 0xA172C4F18b423801E94F9FbB9d4065831Ef4d575
-    USDC Deployed address: 0xA9B0A14b99d0e4F42a0c6433a42c671A6B1E74Aa
+    USDC Deployed address: 0xD330cF76192274bb3f10f2E574a1bDba4ED29352 (NEW) 
+                        0xA9B0A14b99d0e4F42a0c6433a42c671A6B1E74Aa (OLD)
     AttestationVerifier Deployed address:  0xfF27c9A6a878A018FAaD0511fAf870F09C6b79a1
     ServerlessRelay Deployed address:  0x187b8Aed16CA0ee242831f1bAcd5Aa88e3478C64
     Gateways Deployed address:  0x271437C9B2069F13Cc197B9e12A02ED276ae3A85
