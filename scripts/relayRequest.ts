@@ -218,7 +218,8 @@ main()
     USDC Deployed address: 0xD330cF76192274bb3f10f2E574a1bDba4ED29352 (NEW) 
                         0xA9B0A14b99d0e4F42a0c6433a42c671A6B1E74Aa (OLD)
     AttestationVerifier Deployed address:  0xfF27c9A6a878A018FAaD0511fAf870F09C6b79a1
-    ServerlessRelay Deployed address:  0x187b8Aed16CA0ee242831f1bAcd5Aa88e3478C64
+    ServerlessRelay Deployed address:  0xD02e33f98a08030B72A471Ae41e696a57cFecCc8 (NEW)
+                                    0x187b8Aed16CA0ee242831f1bAcd5Aa88e3478C64 (OLD)
     Gateways Deployed address:  0x271437C9B2069F13Cc197B9e12A02ED276ae3A85
     Executors Deployed address:  0xc58Ffc9bfCc846E56Eeb9AaE5aBFAD00393a19C5
     Jobs Deployed address:  0xaba049A974a331A3b450FB8263710Ad140f64E4F
