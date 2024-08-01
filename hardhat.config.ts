@@ -48,6 +48,10 @@ export default {
     polygon: {
       url: "https://polygon-rpc.com/",
     },
+    amoy: {
+      url: "https://rpc-amoy.polygon.technology",
+      accounts: process.env.POLYGON_AMOY_DEPLOYER_KEY !== undefined ? [process.env.POLYGON_AMOY_DEPLOYER_KEY] : undefined,
+    },
   },
   solidity: {
     version: "0.8.25",
@@ -82,6 +86,7 @@ export default {
       arbnova: process.env.ARBISCAN_API_KEY,
       linea: process.env.LINEASCAN_API_KEY,
       polygon: process.env.POLYGONSCAN_API_KEY,
+      amoy: process.env.POLYGONSCAN_API_KEY
     },
     customChains: [{
       network: "arbg",
@@ -117,6 +122,13 @@ export default {
       urls: {
         apiURL: "https://api.lineascan.build/api",
         browserURL: "https://lineascan.build",
+      },
+    }, {
+      network: "amoy",
+      chainId: 80002,
+      urls: {
+        apiURL: "https://api-amoy.polygonscan.com/api",
+        browserURL: "https://amoy.polygonscan.com",
       },
     }],
   },

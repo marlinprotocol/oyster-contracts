@@ -23,13 +23,14 @@ async function main() {
         kind: "uups",
     });
     let staking_token_addr = staking_token.target;
+    console.log("POND Deployed address: ", staking_token_addr);
 
     const USDCoin = await ethers.getContractFactory("USDCoin");
     let usdc_token = await upgrades.deployProxy(USDCoin, [admin_addr], {
         kind: "uups",
     });
-
     let usdc_token_addr = usdc_token.target;
+    console.log("USDC Deployed address: ", usdc_token_addr);
     
     const executorFeePerMs = 1; // 0.001 usd per ms
     const stakingRewardPerMs = 1; // 0.001 usd per ms
@@ -58,6 +59,8 @@ async function main() {
     let overallTimeout = 120;
     let minUserDeadline = 1000;
     let maxUserDeadline = 50000;
+    let fixedGas = 150000;
+    let callbackMeasureGas = 4530;
     const Relay = await ethers.getContractFactory("Relay");
     console.log("Deploying Relay...")
     let relay = await upgrades.deployProxy(
@@ -77,7 +80,9 @@ async function main() {
                 maxUserDeadline,
                 overallTimeout,
                 executionFeePerMs,
-                gatewayFee
+                gatewayFee,
+                fixedGas,
+                callbackMeasureGas
             ]
         });
     let relay_addr = relay.target;
@@ -224,4 +229,17 @@ main()
     Executors Deployed address:  0xc58Ffc9bfCc846E56Eeb9AaE5aBFAD00393a19C5
     Jobs Deployed address:  0xaba049A974a331A3b450FB8263710Ad140f64E4F
     GatewayJobs Deployed address:  0x8E26289186BEA242094611aE1dDa0A2F29587ce8
+
+    --x------------------------x--------------------------x----------------------------x------------------------x--
+
+    POLYGON AMOY -
+    Attestation Verifer Enclave Private Key:  0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+    POND Deployed address:  0xB62510CD5C8e1B5Cf7bA2D8c00C33f0dB3AB888F
+    USDC Deployed address:  0xe58EA18680C1A724fC33f78cBD105e890A9945c6
+    AttestationVerifier Deployed address:  0x8CE4d4e8a97895E78ee80F7674Cb08ADB09ca96C
+    ServerlessRelay Deployed address:  0xCC7649bf25a4ae1F482AE0228dfDa55e96dBf0a6
+    Gateways Deployed address:  0xEfBa6f9e3A54daA609697b04fE6961f8EDE8f4cf
+    Executors Deployed address:  0xb64523D1500DA33f89760FF8566E30B02Eb7587a
+    Jobs Deployed address:  0xE30A7F1E1c982DD2b98aB3Aa102F1eb4f55149e0
+    GatewayJobs Deployed address:  0x9979d4f809D00409C7012315D1C463668865760a
 */
