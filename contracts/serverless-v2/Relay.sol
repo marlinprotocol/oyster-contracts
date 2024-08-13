@@ -12,6 +12,11 @@ import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "../AttestationAutherUpgradeable.sol";
 import "../interfaces/IAttestationVerifier.sol";
 
+/**
+ * @title Relay
+ * @notice This contract manages job relay, gateway registration, and job subscription functionalities.
+ * @dev This contract is upgradeable and uses the UUPS (Universal Upgradeable Proxy Standard) pattern.
+ */
 contract Relay is
     Initializable, // initializer
     ContextUpgradeable, // _msgSender, _msgData
@@ -26,9 +31,21 @@ contract Relay is
     error RelayInvalidToken();
     error RelayInvalidGlobalTimeouts();
 
+    /**
+     * @notice Initializes the logic contract with essential parameters and disables further 
+     * initializations of the logic contract.
+     * @param attestationVerifier The contract responsible for verifying attestations.
+     * @param maxAge The maximum age for attestations.
+     * @param _token The ERC20 token used for payments and deposits.
+     * @param _globalMinTimeout The minimum timeout value for jobs.
+     * @param _globalMaxTimeout The maximum timeout value for jobs.
+     * @param _overallTimeout The overall timeout value for job execution.
+     * @param _executionFeePerMs The fee per millisecond for job execution.
+     * @param _gatewayFeePerJob The fixed fee per job for the gateway.
+     * @param _fixedGas The fixed gas amount for job responses without callback.
+     * @param _callbackMeasureGas The gas amount used for measuring callback gas.
+     */
     /// @custom:oz-upgrades-unsafe-allow constructor
-    // initializes the logic contract without any admins
-    // safeguard against takeover of the logic contract
     constructor(
         IAttestationVerifier attestationVerifier,
         uint256 maxAge,
@@ -60,12 +77,14 @@ contract Relay is
 
     //-------------------------------- Overrides start --------------------------------//
 
+    /// @inheritdoc ERC165Upgradeable
     function supportsInterface(
         bytes4 interfaceId
     ) public view virtual override(ERC165Upgradeable, AccessControlUpgradeable) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
 
+    /// @inheritdoc UUPSUpgradeable
     function _authorizeUpgrade(address /*account*/) internal view override onlyRole(DEFAULT_ADMIN_ROLE) {}
 
     //-------------------------------- Overrides end --------------------------------//
@@ -74,6 +93,11 @@ contract Relay is
 
     error RelayZeroAddressAdmin();
 
+    /**
+     * @notice Initializes the Relay contract with the specified admin and enclave images.
+     * @param _admin The address to be granted the DEFAULT_ADMIN_ROLE.
+     * @param _images The initial enclave images to be whitelisted.
+     */
     function initialize(address _admin, EnclaveImage[] memory _images) public initializer {
         if (_admin == address(0)) revert RelayZeroAddressAdmin();
 
@@ -125,6 +149,13 @@ contract Relay is
 
     //-------------------------------- Admin methods start --------------------------------//
 
+    /** 
+     * @notice Whitelist an enclave image without verifying any attestations.
+     * @param PCR0 The first PCR value of the enclave image.
+     * @param PCR1 The second PCR value of the enclave image.
+     * @param PCR2 The third PCR value of the enclave image.
+     * @return Computed image id and true if the image was freshly whitelisted, false otherwise.
+     */
     function whitelistEnclaveImage(
         bytes calldata PCR0,
         bytes calldata PCR1,
@@ -133,6 +164,11 @@ contract Relay is
         return _whitelistEnclaveImage(EnclaveImage(PCR0, PCR1, PCR2));
     }
 
+    /** 
+     * @notice Revoke an enclave image.
+     * @param imageId Image to be revoked.
+     * @return true if the image was freshly revoked, false otherwise.
+     */
     function revokeEnclaveImage(bytes32 imageId) external onlyRole(DEFAULT_ADMIN_ROLE) returns (bool) {
         return _revokeEnclaveImage(imageId);
     }
@@ -206,6 +242,14 @@ contract Relay is
 
     //-------------------------------- external functions start --------------------------------//
 
+    /**
+     * @notice Registers a gateway by providing attestation and signature details.
+     * @dev This function verifies the enclave key and signature before registering the gateway.
+     * @param _attestationSignature The attestation signature from the enclave.
+     * @param _attestation The attestation details including the enclave public key.
+     * @param _signature The signature from the owner for registering the gateway.
+     * @param _signTimestamp The timestamp at which the owner signed the registration.
+     */
     function registerGateway(
         bytes memory _attestationSignature,
         IAttestationVerifier.Attestation memory _attestation,
@@ -215,6 +259,11 @@ contract Relay is
         _registerGateway(_attestationSignature, _attestation, _signature, _signTimestamp, _msgSender());
     }
 
+    /**
+     * @notice Deregisters a gateway by its enclave address.
+     * @dev This function checks the caller's ownership of the gateway before deregistration.
+     * @param _enclaveAddress The address of the enclave to be deregistered.
+     */
     function deregisterGateway(address _enclaveAddress) external {
         _deregisterGateway(_enclaveAddress, _msgSender());
     }
@@ -465,6 +514,18 @@ contract Relay is
 
     //-------------------------------- external functions start --------------------------------//
 
+    /**
+     * @notice Function for users to relay a job to the enclave for execution.
+     * @dev The job parameters are validated before relaying to the enclave.
+     *      The job escrow amount (USDC+ETH) is transferred to the contract.
+     * @param _codehash The transaction hash storing the code to be executed by the enclave.
+     * @param _codeInputs The excrypted inputs to the code to be executed.
+     * @param _userTimeout The maximum execution time allowed for the job in milliseconds.
+     * @param _maxGasPrice The maximum gas price the job owner is willing to pay, to get back the job response.
+     * @param _refundAccount The account to receive any remaining/slashed tokens.
+     * @param _callbackContract The contract address to be called upon submitting job response.
+     * @param _callbackGasLimit The gas limit for the callback function.
+     */
     function relayJob(
         bytes32 _codehash,
         bytes memory _codeInputs,
@@ -487,6 +548,16 @@ contract Relay is
         );
     }
 
+    /**
+     * @notice Function for gateways to respond to a job that has been executed by the enclave.
+     * @dev The response includes output data, execution time, and error code.
+     * @param _signature The signature of the gateway enclave.
+     * @param _jobId The unique identifier of the job.
+     * @param _output The output data from the job execution.
+     * @param _totalTime The total time taken for job execution in milliseconds.
+     * @param _errorCode The error code returned from the job execution.
+     * @param _signTimestamp The timestamp at which the response was signed by the enclave.
+     */
     function jobResponse(
         bytes calldata _signature,
         uint256 _jobId,
@@ -498,6 +569,11 @@ contract Relay is
         _jobResponse(_signature, _jobId, _output, _totalTime, _errorCode, _signTimestamp);
     }
 
+    /**
+     * @notice Cancels a job whose response hasn't been submitted after the deadline.
+     * @dev The function checks the job owner and ensures the overall timeout has been reached before cancellation.
+     * @param _jobId The unique identifier of the job to be cancelled.
+     */
     function jobCancel(uint256 _jobId) external {
         _jobCancel(_jobId, _msgSender());
     }
@@ -835,7 +911,20 @@ contract Relay is
 
     //-------------------------------- external functions start --------------------------------//
 
-    // user will execute this to start job subscription, and internally it will also call relayJob() to relay the first job in this txn only
+    /**
+     * @notice Starts a subscription for periodic job execution.
+     * @dev The subscription parameters are validated, and the necessary deposits(USDC+ETH) are made.
+     * @param _codehash The transaction hash storing the code to be executed periodically.
+     * @param _codeInputs The encrypted inputs to the code to be executed periodically.
+     * @param _userTimeout The maximum execution time allowed for each job in milliseconds.
+     * @param _maxGasPrice The maximum gas price the subscriber is willing to pay to get back the job response.
+     * @param _refundAccount The account to receive any remaining/slashed tokens.
+     * @param _callbackContract The contract address to be called upon submitting job response.
+     * @param _callbackGasLimit The gas limit for the callback function.
+     * @param _periodicGap The time gap between each job relay in milliseconds.
+     * @param _usdcDeposit The amount of USDC to be deposited for the subscription.
+     * @param _terminationTimestamp The timestamp after which no further jobs are relayed.
+     */
     function startJobSubscription(
         bytes32 _codehash,
         bytes calldata _codeInputs,
@@ -862,6 +951,16 @@ contract Relay is
         );
     }
 
+    /**
+     * @notice Function for the gateway to respond to a periodic job within a subscription.
+     * @dev The response includes output data, execution time, and error code.
+     * @param _signature The signature of the gateway enclave verifying the job response.
+     * @param _jobSubsId The unique identifier of the job subscription.
+     * @param _output The output data from the job execution.
+     * @param _totalTime The total time taken for job execution in milliseconds.
+     * @param _errorCode The error code returned from the job execution.
+     * @param _signTimestamp The timestamp at which the response was signed by the enclave.
+     */
     function jobSubsResponse(
         bytes calldata _signature,
         uint256 _jobSubsId,
@@ -873,6 +972,12 @@ contract Relay is
         _jobSubsResponse(_signature, _jobSubsId, _output, _totalTime, _errorCode, _signTimestamp);
     }
 
+    /**
+     * @notice Deposits additional USDC and native assets(ETH) for a job subscription.
+     * @dev This function allows the subscriber to top up their subscription balance.
+     * @param _jobSubsId The unique identifier of the job subscription.
+     * @param _usdcDeposit The amount of USDC to be deposited.
+     */
     function depositForJobSubscription(
         uint256 _jobSubsId,
         uint256 _usdcDeposit
@@ -880,6 +985,15 @@ contract Relay is
         _depositForJobSubscription(_jobSubsId, _usdcDeposit);
     }
 
+    /**
+     * @notice Updates the job parameters for a specific job subscription.
+     * @dev This function allows the subscriber to modify the job execution code and input parameters
+     *      for an existing subscription. The new parameters will be used in subsequent
+     *      job executions within the subscription.
+     * @param _jobSubsId The unique identifier of the job subscription to be updated.
+     * @param _codehash The new transaction hash storing the code that will be executed by the enclave.
+     * @param _codeInputs The new encrypted input parameters for the code to be executed.
+     */
     function updateJobParams(
         uint256 _jobSubsId,
         bytes32 _codehash,
@@ -888,6 +1002,15 @@ contract Relay is
         _updateJobParams(_jobSubsId, _codehash, _codeInputs);
     }
 
+    /**
+     * @notice Updates the termination parameters for a specific job subscription.
+     * @dev This function allows the subscriber to modify the termination time associated with an 
+     *      existing job subscription. It means user might have to deposit additional USDC+ETH if 
+     *      termination time is increased, and enought funds weren't deposited initially.
+     * @param _jobSubsId The unique identifier of the job subscription to be updated.
+     * @param _terminationTimestamp The new timestamp (in seconds) when the job subscription will terminate.
+     * @param _usdcDeposit The additional amount of USDC to be deposited.
+     */
     function updateJobTerminationParams(
         uint256 _jobSubsId,
         uint256 _terminationTimestamp,

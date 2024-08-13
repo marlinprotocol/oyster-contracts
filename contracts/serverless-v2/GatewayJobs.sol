@@ -25,9 +25,20 @@ contract GatewayJobs is
     error GatewayJobsZeroAddressStakingToken();
     error GatewayJobsZeroAddressUsdcToken();
 
+    /**
+     * @notice Initializes the logic contract without any admins to safeguard against takeover of the logic contract.
+     * @param _stakingToken The staking token used in the system.
+     * @param _usdcToken The USDC token used for payments.
+     * @param _signMaxAge The maximum age of a valid signature in seconds.
+     * @param _relayBufferTime The buffer time allowed for relaying jobs.
+     * @param _executionFeePerMs The execution fee per millisecond.
+     * @param _slashCompForGateway The amount to be slashed from a gateway.
+     * @param _reassignCompForReporterGateway The compensation for the gateway that reports the reassignment.
+     * @param _jobMgr The job manager contract.
+     * @param _gateways The gateways contract.
+     * @param _stakingPaymentPoolAddress The address of the staking payment pool.
+     */
     /// @custom:oz-upgrades-unsafe-allow constructor
-    // initializes the logic contract without any admins
-    // safeguard against takeover of the logic contract
     constructor(
         IERC20 _stakingToken,
         IERC20 _usdcToken,
@@ -60,12 +71,14 @@ contract GatewayJobs is
 
     //-------------------------------- Overrides start --------------------------------//
 
+    /// @inheritdoc ERC165Upgradeable
     function supportsInterface(
         bytes4 interfaceId
     ) public view virtual override(ERC165Upgradeable, AccessControlUpgradeable) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
 
+    /// @inheritdoc UUPSUpgradeable
     function _authorizeUpgrade(address /*account*/) internal view override onlyRole(DEFAULT_ADMIN_ROLE) {}
 
     //-------------------------------- Overrides end --------------------------------//
@@ -74,6 +87,10 @@ contract GatewayJobs is
 
     error GatewayJobsZeroAddressAdmin();
 
+    /**
+     * @notice Initializes the contract, setting the admin and configuring roles.
+     * @param _admin The address to be granted the admin role.
+     */
     function initialize(address _admin) public initializer {
         if (_admin == address(0)) revert GatewayJobsZeroAddressAdmin();
 
@@ -178,6 +195,10 @@ contract GatewayJobs is
 
     //-------------------------------- admin functions start ----------------------------------//
 
+    /**
+     * @notice Sets the job allowance for the USDC token, allowing the JOB_MANAGER to spend it.
+     * @dev Only callable by an account with the DEFAULT_ADMIN_ROLE.
+     */
     function setJobAllowance() external onlyRole(DEFAULT_ADMIN_ROLE) {
         // increasing allowance to be used while relaying jobs
         bool success = USDC_TOKEN.approve(address(JOB_MANAGER), type(uint256).max);
@@ -374,6 +395,19 @@ contract GatewayJobs is
 
     //-------------------------------- external functions start --------------------------------//
 
+    /**
+     * @notice Function to relay a job from a gateway.
+     * @dev Can only be called by a gateway registered in the Gateways contract.
+     * @param _signature The signature verifying the job details.
+     * @param _jobId The ID of the job to be relayed.
+     * @param _codehash The hash of the job's code.
+     * @param _codeInputs The inputs to the job's code.
+     * @param _deadline The deadline for job execution in milliseconds.
+     * @param _jobRequestTimestamp The timestamp when the job was requested.
+     * @param _sequenceId The sequence ID of the job relay.
+     * @param _jobOwner The address of the job owner.
+     * @param _signTimestamp The timestamp when the signature was created.
+     */
     function relayJob(
         bytes memory _signature,
         uint256 _jobId,
@@ -399,6 +433,17 @@ contract GatewayJobs is
         );
     }
 
+    /**
+     * @notice Reassigns a gateway for a job relay. This function facilitates the reassignment by verifying the provided signature and updating the job's gateway.
+     * @dev Can only be called by a registered gateway.
+     * @param _gatewayOld The address of the previous gateway that was assigned to the job.
+     * @param _jobId The ID of the job that needs a gateway reassignment.
+     * @param _signature The signature provided to verify the job reassignment details.
+     * @param _sequenceId The sequence ID associated with the job relay, used for tracking the order of operations.
+     * @param _jobRequestTimestamp The timestamp when the job was initially requested.
+     * @param _jobOwner The address of the owner of the job.
+     * @param _signTimestamp The timestamp when the signature was created.
+     */
     function reassignGatewayRelay(
         address _gatewayOld,
         uint256 _jobId,
@@ -463,6 +508,14 @@ contract GatewayJobs is
 
     //------------------------------- external functions start ---------------------------------//
 
+    /**
+     * @notice External function to call the internal _oysterResultCall function after a job has been executed.
+     * @dev Can only be called by an address with the JOBS_ROLE.
+     * @param _jobId The ID of the job that was executed.
+     * @param _output The output data from the job execution.
+     * @param _errorCode The error code returned from the job execution. 0 indicates success, while non-zero values indicate specific errors.
+     * @param _totalTime The total time taken for the job execution, in milliseconds.
+     */
     function oysterResultCall(
         uint256 _jobId,
         bytes memory _output,
@@ -472,6 +525,12 @@ contract GatewayJobs is
         _oysterResultCall(_jobId, _output, _errorCode, _totalTime);
     }
 
+    /**
+     * @notice External function to call the internal _oysterFailureCall function after a job has failed.
+     * @dev Can only be called by an address with the JOBS_ROLE.
+     * @param _jobId The ID of the job that failed.
+     * @param _slashAmount The amount of tokens to be slashed due to the failure.
+     */
     function oysterFailureCall(uint256 _jobId, uint256 _slashAmount) external onlyRole(JOBS_ROLE) {
         _oysterFailureCall(_jobId, _slashAmount);
     }
