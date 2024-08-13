@@ -30,7 +30,9 @@ contract Executors is
     using SafeERC20 for IERC20;
     using ECDSA for bytes32;
 
+    /// @notice Thrown when the provided ERC20 token address is zero.
     error ExecutorsZeroAddressToken();
+    /// @notice Thrown when the provided minimum stake amount is zero.
     error ExecutorsZeroMinStakeAmount();
 
     /**
@@ -79,6 +81,7 @@ contract Executors is
 
     //-------------------------------- Initializer start --------------------------------//
 
+    /// @notice Thrown when the provided admin address is zero.
     error ExecutorsZeroAddressAdmin();
 
     /**
@@ -178,13 +181,21 @@ contract Executors is
     /// @param removedAmount The amount of stake removed.
     event ExecutorStakeRemoved(address indexed enclaveAddress, uint256 removedAmount);
 
+    /// @notice Thrown when the signature timestamp has expired.
     error ExecutorsSignatureTooOld();
+    /// @notice Thrown when the signer of the registration data is invalid.
     error ExecutorsInvalidSigner();
+    /// @notice Thrown when attempting to register an executor that already exists.
     error ExecutorsExecutorAlreadyExists();
+    /// @notice Thrown when attempting to drain an executor that is already draining.
     error ExecutorsAlreadyDraining();
+    /// @notice Thrown when attempting to revive an executor that is not draining.
     error ExecutorsAlreadyRevived();
+    /// @notice Thrown when attempting to deregister or remove stake from an executor that is not draining.
     error ExecutorsNotDraining();
+    /// @notice Thrown when attempting to deregister or remove stake from an executor that has pending jobs.
     error ExecutorsHasPendingJobs();
+    /// @notice Thrown when the provided executor owner does not match the stored owner.
     error ExecutorsInvalidOwner();
 
     //-------------------------------- Admin methods start --------------------------------//

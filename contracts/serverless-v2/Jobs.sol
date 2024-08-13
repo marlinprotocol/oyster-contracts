@@ -25,7 +25,9 @@ contract Jobs is
     using SafeERC20 for IERC20;
     using ECDSA for bytes32;
 
+    /// @notice Thrown when the staking token address is zero.
     error JobsZeroAddressStakingToken();
+    /// @notice Thrown when the USDC token address is zero.
     error JobsZeroAddressUsdcToken();
 
     /**
@@ -91,6 +93,7 @@ contract Jobs is
 
     //-------------------------------- Initializer start --------------------------------//
 
+    /// @notice Thrown when the admin address is zero.
     error JobsZeroAddressAdmin();
 
     /**
@@ -209,14 +212,23 @@ contract Jobs is
      */
     event JobFailureCallbackCalled(uint256 indexed jobId, bool callback_success);
 
+    /// @notice Thrown when the relay time has passed.
     error JobsRelayTimeOver();
+    /// @notice Thrown when the provided sequence ID is invalid.
     error JobsInvalidSequenceId();
+    /// @notice Thrown when the job has already been relayed.
     error JobsJobAlreadyRelayed();
+    /// @notice Thrown when the chain is unsupported.
     error JobsUnsupportedChain();
+    /// @notice Thrown when the signature is too old.
     error JobsSignatureTooOld();
+    /// @notice Thrown when the job execution time has passed.
     error JobsExecutionTimeOver();
+    /// @notice Thrown when the executor is not selected for the job.
     error JobsNotSelectedExecutor();
+    /// @notice Thrown when the executor has already submitted output for the job.
     error JobsExecutorAlreadySubmittedOutput();
+    /// @notice Thrown when there are unavailable resources to execute the job.
     error JobsUnavailableResources();
 
     //-------------------------------- internal functions start --------------------------------//
@@ -424,9 +436,16 @@ contract Jobs is
 
     //-------------------------------- Timeout start --------------------------------//
 
+    /**
+     * @notice Emitted when an executor is slashed due to execution timeout.
+     * @param jobId The ID of the job.
+     * @param enclaveAddress The address of the slashed executor.
+     */
     event SlashedOnExecutionTimeout(uint256 indexed jobId, address indexed enclaveAddress);
 
+    /// @notice Thrown when the job ID is invalid.
     error JobsInvalidJob();
+    /// @notice Thrown when the job deadline has not yet passed.
     error JobsDeadlineNotOver();
 
     //-------------------------------- internal functions start ----------------------------------//

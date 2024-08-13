@@ -22,7 +22,9 @@ contract GatewayJobs is
     using SafeERC20 for IERC20;
     using ECDSA for bytes32;
 
+    /// @notice Error for when zero address is provided for staking token.
     error GatewayJobsZeroAddressStakingToken();
+    /// @notice Error for when zero address is provided for USDC token.
     error GatewayJobsZeroAddressUsdcToken();
 
     /**
@@ -85,6 +87,7 @@ contract GatewayJobs is
 
     //-------------------------------- Initializer start --------------------------------//
 
+    /// @notice Error for when zero address is provided for the admin address.
     error GatewayJobsZeroAddressAdmin();
 
     /**
@@ -174,23 +177,62 @@ contract GatewayJobs is
             "ReassignGateway(uint256 jobId,address gatewayOld,address jobOwner,uint8 sequenceId,uint256 jobRequestTimestamp,uint256 signTimestamp)"
         );
 
+    /**
+     * @notice Emitted when a job is relayed by a gateway.
+     * @param jobId The ID of the job.
+     * @param execJobId The ID of the execution job.
+     * @param jobOwner The address of the job owner.
+     * @param gateway The address of the gateway.
+     */
     event JobRelayed(uint256 indexed jobId, uint256 execJobId, address jobOwner, address gateway);
 
+    /**
+     * @notice Emitted when a job's resource is unavailable.
+     * @param jobId The ID of the job.
+     * @param gateway The address of the gateway that reported the unavailability.
+     */
     event JobResourceUnavailable(uint256 indexed jobId, address indexed gateway);
 
+    /**
+     * @notice Emitted when a gateway is reassigned to a job.
+     * @param jobId The ID of the job.
+     * @param prevGateway The address of the previous gateway.
+     * @param reporterGateway The address of the gateway that reported the reassignment.
+     * @param sequenceId The sequence ID of the reassignment.
+     */
     event GatewayReassigned(uint256 indexed jobId, address prevGateway, address reporterGateway, uint8 sequenceId);
 
+    /**
+     * @notice Emitted when a job has been responded to after execution.
+     * @param jobId The ID of the job.
+     * @param output The output data from the job execution.
+     * @param totalTime The total time taken for the job execution, in milliseconds.
+     * @param errorCode The error code returned from the job execution.
+     */
     event JobResponded(uint256 indexed jobId, bytes output, uint256 totalTime, uint8 errorCode);
 
+    /**
+     * @notice Emitted when a job has failed.
+     * @param jobId The ID of the job.
+     */
     event JobFailed(uint256 indexed jobId);
 
+    // @notice Error for when USDC token approval fails.
     error GatewaysJobsApprovalFailed();
+    // @notice Error for when the relay time for a job has passed.
     error GatewayJobsRelayTimeOver();
+    // @notice Error for when the job resource is unavailable.
     error GatewayJobsResourceUnavailable();
+    // @notice Error for when a job has already been relayed.
     error GatewayJobsAlreadyRelayed();
+    // @notice Error for when the relay sequence ID is invalid.
     error GatewayJobsInvalidRelaySequenceId();
+    // @notice Error for when the chain is unsupported.
     error GatewayJobsUnsupportedChain();
+    // @notice Error for when the job signature is too old.
     error GatewayJobsSignatureTooOld();
+    /// @notice Error for when job creation fails with a reason.
+    /// @param reason The reason for the job creation failure.
     error GatewayJobsCreateFailed(bytes reason);
 
     //-------------------------------- admin functions start ----------------------------------//

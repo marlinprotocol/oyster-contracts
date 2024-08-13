@@ -28,7 +28,9 @@ contract Relay is
     using SafeERC20 for IERC20;
     using ECDSA for bytes32;
 
+    /// @notice Error for when zero address token is provided.
     error RelayInvalidToken();
+    /// @notice Error for when global timeout values are invalid (minimum timeout is not less than maximum timeout).
     error RelayInvalidGlobalTimeouts();
 
     /**
@@ -91,6 +93,7 @@ contract Relay is
 
     //-------------------------------- Initializer start --------------------------------//
 
+    /// @notice Error for when zero address is provided for the admin.
     error RelayZeroAddressAdmin();
 
     /**
@@ -182,13 +185,26 @@ contract Relay is
 
     bytes32 private constant REGISTER_TYPEHASH = keccak256("Register(address owner,uint256 signTimestamp)");
 
+    /**
+     * @notice Emitted when a gateway is successfully registered.
+     * @param owner The address of the owner of the enclave.
+     * @param enclaveAddress The address of the enclave being registered.
+     */
     event GatewayRegistered(address indexed owner, address indexed enclaveAddress);
 
+    /**
+     * @notice Emitted when a gateway is successfully deregistered.
+     * @param enclaveAddress The address of the enclave being deregistered.
+     */
     event GatewayDeregistered(address indexed enclaveAddress);
 
+    /// @notice Error for when a gateway already exists in the registry.
     error RelayGatewayAlreadyExists();
+    /// @notice Error for when an invalid gateway address is provided.
     error RelayInvalidGateway();
+    /// @notice Error for when the provided signature timestamp is too old.
     error RelaySignatureTooOld();
+    /// @notice Error for when the signature is from an invalid signer.
     error RelayInvalidSigner();
 
     //-------------------------------- internal functions start --------------------------------//
@@ -292,7 +308,21 @@ contract Relay is
 
     bytes32 private constant JOB_RESPONSE_TYPEHASH =
         keccak256("JobResponse(uint256 jobId,bytes output,uint256 totalTime,uint8 errorCode,uint256 signTimestamp)");
-    
+
+    /**
+     * @notice Emitted when a job is successfully relayed.
+     * @param jobId The unique identifier of the job.
+     * @param codehash The transaction hash storing the code to be executed.
+     * @param codeInputs The encrypted inputs for the code execution.
+     * @param userTimeout The timeout specified by the user for the job.
+     * @param maxGasPrice The maximum gas price allowed for the job.
+     * @param usdcDeposit The USDC deposit provided for the job.
+     * @param callbackDeposit The callback deposit provided for the job.
+     * @param refundAccount The address where the refund will be sent.
+     * @param callbackContract The address of the callback contract.
+     * @param startTime The timestamp when the job was started.
+     * @param callbackGasLimit The gas limit for the callback execution.
+     */
     event JobRelayed(
         uint256 indexed jobId,
         bytes32 codehash,
@@ -307,17 +337,37 @@ contract Relay is
         uint256 callbackGasLimit
     );
 
+    /**
+     * @notice Emitted when a job responds with its output.
+     * @param jobId The unique identifier of the job.
+     * @param output The output from the job execution.
+     * @param totalTime The total time taken for the job execution.
+     * @param errorCode The error code if the job failed.
+     * @param success A boolean indicating if the job was successful.
+     */
     event JobResponded(uint256 indexed jobId, bytes output, uint256 totalTime, uint256 errorCode, bool success);
 
+    /**
+     * @notice Emitted when a job is cancelled.
+     * @param jobId The unique identifier of the job being cancelled.
+     */
     event JobCancelled(uint256 indexed jobId);
 
+    /// @notice Error for when an invalid user timeout is provided.
     error RelayInvalidUserTimeout();
+    /// @notice Error for when a job does not exist.
     error RelayJobNotExists();
+    /// @notice Error for when the overall timeout for a job has been exceeded.
     error RelayOverallTimeoutOver();
+    /// @notice Error for when the job owner is not valid.
     error RelayInvalidJobOwner();
+    /// @notice Error for when the overall timeout for a job has not yet been exceeded.
     error RelayOverallTimeoutNotOver();
+    /// @notice Error for when the callback deposit transfer fails.
     error RelayCallbackDepositTransferFailed();
+    /// @notice Error for when there is insufficient callback deposit.
     error RelayInsufficientCallbackDeposit();
+    /// @notice Error for when the maximum gas price provided is insufficient.
     error RelayInsufficientMaxGasPrice();
 
     //-------------------------------- internal functions start -------------------------------//
@@ -600,6 +650,19 @@ contract Relay is
 
     uint256 public jobSubsCount;
 
+    /**
+     * @notice Emitted when a job subscription is started.
+     * @param jobSubsId The unique identifier of the job subscription.
+     * @param jobSubscriber The address of the job subscriber.
+     * @param periodicGap The gap between job executions in the subscription.
+     * @param usdcDeposit The USDC deposit provided for the subscription.
+     * @param terminationTimestamp The timestamp when the subscription should terminate.
+     * @param userTimeout The timeout specified by the user for the subscription.
+     * @param refundAccount The address where the refund will be sent.
+     * @param codehash The transaction hash storing the code to be executed.
+     * @param codeInputs The encrypted inputs for the code execution.
+     * @param startTime The timestamp when the subscription was started.
+     */
     event JobSubscriptionStarted(
         uint256 indexed jobSubsId,
         address indexed jobSubscriber,
@@ -613,6 +676,16 @@ contract Relay is
         uint256 startTime
     );
 
+    /**
+     * @notice Emitted when a job subscription responds with its output.
+     * @param jobSubsId The unique identifier of the job subscription.
+     * @param output The output from the job execution.
+     * @param totalTime The total time taken for the job execution.
+     * @param errorCode The error code if the job failed.
+     * @param success A boolean indicating if the job was successful.
+     * @param currentRuns The number of times the job has run.
+     * @param lastRunTimestamp The timestamp of the last job run.
+     */
     event JobSubsResponded(
         uint256 indexed jobSubsId,
         bytes output,
@@ -623,6 +696,13 @@ contract Relay is
         uint256 lastRunTimestamp
     );
 
+    /**
+     * @notice Emitted when USDC or callback deposit is made for a job subscription.
+     * @param jobSubsId The unique identifier of the job subscription.
+     * @param depositor The address making the deposit.
+     * @param usdcDeposit The amount of USDC deposited.
+     * @param callbackDeposit The amount of callback deposit made.
+     */
     event JobSubscriptionDeposited(
         uint256 indexed jobSubsId,
         address indexed depositor,
@@ -630,6 +710,14 @@ contract Relay is
         uint256 callbackDeposit
     );
 
+    /**
+     * @notice Emitted when funds are withdrawn from a job subscription.
+     * @param jobSubsId The unique identifier of the job subscription.
+     * @param withdrawer The address withdrawing the funds.
+     * @param usdcAmountWithdrawn The amount of USDC withdrawn.
+     * @param callbackAmountWithdrawn The amount of callback deposit withdrawn.
+     * @param success A boolean indicating if the withdrawal was successful.
+     */
     event JobSubscriptionWithdrawn(
         uint256 indexed jobSubsId,
         address indexed withdrawer,
@@ -638,20 +726,34 @@ contract Relay is
         bool success
     );
 
+    /**
+     * @notice Emitted when job parameters are updated in a job subscription.
+     * @param jobSubsId The unique identifier of the job subscription.
+     * @param _codehash The new code hash for the job.
+     * @param _codeInputs The new code inputs for the job.
+     */
     event JobSubsJobParamsUpdated(
         uint256 indexed jobSubsId,
         bytes32 _codehash,
         bytes _codeInputs
     );
 
+    /**
+     * @notice Emitted when termination parameters are updated in a job subscription.
+     * @param jobSubsId The unique identifier of the job subscription.
+     * @param terminationTimestamp The new termination timestamp for the subscription.
+     */
     event JobSubsTerminationParamsUpdated(
         uint256 indexed jobSubsId,
         // uint256 maxRuns,
         uint256 terminationTimestamp
     );
 
+    /// @notice Error for when a job subscription is invalid.
     error InvalidJobSubscription();
+    /// @notice Error for when insufficient USDC is being deposited for a job subscription.
     error RelayInsufficientUsdcDeposit();
+    /// @notice Error for when the termination timestamp is being updated to an invalid value.
     error InvalidTerminationTimestamp();
 
     //-------------------------------- internal functions start --------------------------------//
