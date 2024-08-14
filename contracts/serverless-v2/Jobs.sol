@@ -11,7 +11,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./Executors.sol";
 
 /**
- * @title Jobs
+ * @title Jobs Contract
  * @dev This contract manages job creation, execution, and reward distribution. 
  * @dev This contract is upgradeable and uses the UUPS (Universal Upgradeable Proxy Standard) pattern.
  */
@@ -175,7 +175,7 @@ contract Jobs is
      * @param jobId The ID of the job created.
      * @param jobOwner The address of the job owner.
      * @param codehash The transaction hash storing the job code.
-     * @param codeInputs The encrypted inputs to the job code.
+     * @param codeInputs The inputs to the job code.
      * @param deadline The deadline for the job in milliseconds.
      * @param selectedExecutors The selected executors for the job.
      */

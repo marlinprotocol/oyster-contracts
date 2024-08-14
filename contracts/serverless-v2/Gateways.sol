@@ -568,7 +568,7 @@ contract Gateways is
     }
 
     /**
-     * @notice Initiates the draining process for the gateway, allowing the owner to eventually remove their stake.
+     * @notice Initiates the draining process for the gateway, allowing the owner to eventually remove their stake and deregister.
      * @param _enclaveAddress The address of the enclave to be drained.
      */
     function drainGateway(address _enclaveAddress) external isValidGatewayOwner(_enclaveAddress, _msgSender()) {
@@ -697,7 +697,7 @@ contract Gateways is
 
     /**
      * @notice Slashes a portion of the stake from the old gateway when it is reassigned.
-     * @param _oldGateway The address of the old gateway being reassigned.
+     * @param _oldGateway The address of the old gateway being slashed.
      * @return uint256 The amount of tokens slashed and transferred.
      * @dev Can only be called by an account with the GATEWAY_JOBS_ROLE.
      */

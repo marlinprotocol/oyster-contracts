@@ -12,6 +12,12 @@ import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "./Gateways.sol";
 import "./Jobs.sol";
 
+/**
+ * @title GatewayJobs Contract
+ * @dev This contract interacts with Jobs contract for job relay and response, and also slashes and 
+        reassigns gateway in case they fail to relay the job request. 
+ * @dev This contract is upgradeable and uses the UUPS (Universal Upgradeable Proxy Standard) pattern.
+ */
 contract GatewayJobs is
     Initializable, // initializer
     ContextUpgradeable, // _msgSender, _msgData
@@ -34,7 +40,7 @@ contract GatewayJobs is
      * @param _signMaxAge The maximum age of a valid signature in seconds.
      * @param _relayBufferTime The buffer time allowed for relaying jobs.
      * @param _executionFeePerMs The execution fee per millisecond.
-     * @param _slashCompForGateway The amount to be slashed from a gateway.
+     * @param _slashCompForGateway The slashed amount component given to the gateway when all the selected executors fails to submit the job response.
      * @param _reassignCompForReporterGateway The compensation for the gateway that reports the reassignment.
      * @param _jobMgr The job manager contract.
      * @param _gateways The gateways contract.

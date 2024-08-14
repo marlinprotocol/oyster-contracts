@@ -13,7 +13,7 @@ import "../AttestationAutherUpgradeable.sol";
 import "../interfaces/IAttestationVerifier.sol";
 
 /**
- * @title Relay
+ * @title Serverless Relay Contract
  * @notice This contract manages job relay, gateway registration, and job subscription functionalities.
  * @dev This contract is upgradeable and uses the UUPS (Universal Upgradeable Proxy Standard) pattern.
  */
@@ -40,10 +40,11 @@ contract Relay is
      * @param maxAge The maximum age for attestations.
      * @param _token The ERC20 token used for payments and deposits.
      * @param _globalMinTimeout The minimum timeout value for jobs.
-     * @param _globalMaxTimeout The maximum timeout value for jobs.
-     * @param _overallTimeout The overall timeout value for job execution.
-     * @param _executionFeePerMs The fee per millisecond for job execution.
-     * @param _gatewayFeePerJob The fixed fee per job for the gateway.
+     * @param _globalMaxTimeout The maximum timeout value for jobs. This refers to the max time for the executor to 
+     *                          submit the job response, once the job request has been relayed on the common chain.
+     * @param _overallTimeout The overall timeout value for job execution. This refers to the max time for the complete lifecycle of the job request on-chain.
+     * @param _executionFeePerMs The fee per millisecond for job execution(in USDC).
+     * @param _gatewayFeePerJob The fixed fee per job for the gateway(in USDC).
      * @param _fixedGas The fixed gas amount for job responses without callback.
      * @param _callbackMeasureGas The gas amount used for measuring callback gas.
      */
@@ -153,7 +154,7 @@ contract Relay is
     //-------------------------------- Admin methods start --------------------------------//
 
     /** 
-     * @notice Whitelist an enclave image without verifying any attestations.
+     * @notice Whitelist an enclave image for use by gateways.
      * @param PCR0 The first PCR value of the enclave image.
      * @param PCR1 The second PCR value of the enclave image.
      * @param PCR2 The third PCR value of the enclave image.
@@ -263,8 +264,8 @@ contract Relay is
      * @dev This function verifies the enclave key and signature before registering the gateway.
      * @param _attestationSignature The attestation signature from the enclave.
      * @param _attestation The attestation details including the enclave public key.
-     * @param _signature The signature from the owner for registering the gateway.
-     * @param _signTimestamp The timestamp at which the owner signed the registration.
+     * @param _signature The signature from the enclave for registering the gateway.
+     * @param _signTimestamp The timestamp at which the enclave signed the registration.
      */
     function registerGateway(
         bytes memory _attestationSignature,
@@ -313,7 +314,7 @@ contract Relay is
      * @notice Emitted when a job is successfully relayed.
      * @param jobId The unique identifier of the job.
      * @param codehash The transaction hash storing the code to be executed.
-     * @param codeInputs The encrypted inputs for the code execution.
+     * @param codeInputs The inputs for the code execution.
      * @param userTimeout The timeout specified by the user for the job.
      * @param maxGasPrice The maximum gas price allowed for the job.
      * @param usdcDeposit The USDC deposit provided for the job.
@@ -572,7 +573,7 @@ contract Relay is
      * @param _codeInputs The excrypted inputs to the code to be executed.
      * @param _userTimeout The maximum execution time allowed for the job in milliseconds.
      * @param _maxGasPrice The maximum gas price the job owner is willing to pay, to get back the job response.
-     * @param _refundAccount The account to receive any remaining/slashed tokens.
+     * @param _refundAccount The account to receive any slashed tokens.
      * @param _callbackContract The contract address to be called upon submitting job response.
      * @param _callbackGasLimit The gas limit for the callback function.
      */
@@ -620,8 +621,8 @@ contract Relay is
     }
 
     /**
-     * @notice Cancels a job whose response hasn't been submitted after the deadline.
-     * @dev The function checks the job owner and ensures the overall timeout has been reached before cancellation.
+     * @notice Cancels a job whose response hasn't been submitted and the deadline is over.
+     * @dev The function can be called by any user but ensures that the overall timeout has been reached before cancellation.
      * @param _jobId The unique identifier of the job to be cancelled.
      */
     function jobCancel(uint256 _jobId) external {
@@ -660,7 +661,7 @@ contract Relay is
      * @param userTimeout The timeout specified by the user for the subscription.
      * @param refundAccount The address where the refund will be sent.
      * @param codehash The transaction hash storing the code to be executed.
-     * @param codeInputs The encrypted inputs for the code execution.
+     * @param codeInputs The inputs for the code execution.
      * @param startTime The timestamp when the subscription was started.
      */
     event JobSubscriptionStarted(
@@ -1017,7 +1018,7 @@ contract Relay is
      * @notice Starts a subscription for periodic job execution.
      * @dev The subscription parameters are validated, and the necessary deposits(USDC+ETH) are made.
      * @param _codehash The transaction hash storing the code to be executed periodically.
-     * @param _codeInputs The encrypted inputs to the code to be executed periodically.
+     * @param _codeInputs The inputs to the code to be executed periodically.
      * @param _userTimeout The maximum execution time allowed for each job in milliseconds.
      * @param _maxGasPrice The maximum gas price the subscriber is willing to pay to get back the job response.
      * @param _refundAccount The account to receive any remaining/slashed tokens.
@@ -1094,7 +1095,7 @@ contract Relay is
      *      job executions within the subscription.
      * @param _jobSubsId The unique identifier of the job subscription to be updated.
      * @param _codehash The new transaction hash storing the code that will be executed by the enclave.
-     * @param _codeInputs The new encrypted input parameters for the code to be executed.
+     * @param _codeInputs The new input parameters for the code to be executed.
      */
     function updateJobParams(
         uint256 _jobSubsId,

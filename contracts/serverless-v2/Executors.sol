@@ -14,7 +14,7 @@ import "./tree/TreeUpgradeable.sol";
 import "../interfaces/IAttestationVerifier.sol";
 
 /**
- * @title Executors
+ * @title Executors Contract
  * @notice Manages the registration, staking, and job assignment of execution nodes.
  * @dev This contract is upgradeable and uses the UUPS (Universal Upgradeable Proxy Standard) pattern.
  */
@@ -511,6 +511,7 @@ contract Executors is
 
     /**
      * @notice Selects a number of executor nodes for job assignments.
+     * @dev Executors are selected randomly based on the stake distribution
      * @param _noOfNodesToSelect The number of nodes to select.
      * @return selectedNodes An array of selected node addresses.
      */
@@ -521,7 +522,10 @@ contract Executors is
     }
 
     /**
-     * @notice Releases an executor node, reducing its job capacity.
+     * @notice Releases an executor node on job response submission, thus reducing its active jobs.
+     * @dev This also updates the executor node staking in the tree if executor isn't in the draining 
+     *      mode and has some minimum stake amount. If the total stake falls below the minimum stake 
+     *      amount then the node is removed from the tree ad won't be assigned new jobs.
      * @param _enclaveAddress The address of the executor enclave to release.
      */
     function releaseExecutor(address _enclaveAddress) external onlyRole(JOBS_ROLE) {
