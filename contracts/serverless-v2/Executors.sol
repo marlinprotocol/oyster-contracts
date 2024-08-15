@@ -511,7 +511,7 @@ contract Executors is
 
     /**
      * @notice Selects a number of executor nodes for job assignments.
-     * @dev Executors are selected randomly based on the stake distribution
+     * @dev Executors are selected randomly based on the stake distribution.
      * @param _noOfNodesToSelect The number of nodes to select.
      * @return selectedNodes An array of selected node addresses.
      */
@@ -523,9 +523,7 @@ contract Executors is
 
     /**
      * @notice Releases an executor node on job response submission, thus reducing its active jobs.
-     * @dev This also updates the executor node staking in the tree if executor isn't in the draining 
-     *      mode and has some minimum stake amount. If the total stake falls below the minimum stake 
-     *      amount then the node is removed from the tree ad won't be assigned new jobs.
+     * @dev Can only be called by an account with the `JOBS_ROLE`.
      * @param _enclaveAddress The address of the executor enclave to release.
      */
     function releaseExecutor(address _enclaveAddress) external onlyRole(JOBS_ROLE) {

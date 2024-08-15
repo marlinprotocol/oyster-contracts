@@ -13,8 +13,8 @@ import "../AttestationAutherUpgradeable.sol";
 import "../interfaces/IAttestationVerifier.sol";
 
 /**
- * @title Serverless Relay Contract
- * @notice This contract manages job relay, gateway registration, and job subscription functionalities.
+ * @title Relay Contract
+ * @notice This contract manages serverless job relay, gateway registration, and job subscription functionalities.
  * @dev This contract is upgradeable and uses the UUPS (Universal Upgradeable Proxy Standard) pattern.
  */
 contract Relay is
@@ -40,8 +40,7 @@ contract Relay is
      * @param maxAge The maximum age for attestations.
      * @param _token The ERC20 token used for payments and deposits.
      * @param _globalMinTimeout The minimum timeout value for jobs.
-     * @param _globalMaxTimeout The maximum timeout value for jobs. This refers to the max time for the executor to 
-     *                          submit the job response, once the job request has been relayed on the common chain.
+     * @param _globalMaxTimeout The maximum timeout value for jobs. This refers to the max time for the executor to execute the job.
      * @param _overallTimeout The overall timeout value for job execution. This refers to the max time for the complete lifecycle of the job request on-chain.
      * @param _executionFeePerMs The fee per millisecond for job execution(in USDC).
      * @param _gatewayFeePerJob The fixed fee per job for the gateway(in USDC).
