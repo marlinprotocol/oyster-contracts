@@ -37,7 +37,7 @@ contract Relay is
      * @notice Initializes the logic contract with essential parameters and disables further 
      * initializations of the logic contract.
      * @param attestationVerifier The contract responsible for verifying attestations.
-     * @param maxAge The maximum age for attestations.
+     * @param maxAge The maximum age for attestations and signature, in seconds.
      * @param _token The ERC20 token used for payments and deposits.
      * @param _globalMinTimeout The minimum timeout value for jobs.
      * @param _globalMaxTimeout The maximum timeout value for jobs. This refers to the max time for the executor to execute the job.
@@ -199,13 +199,13 @@ contract Relay is
      */
     event GatewayDeregistered(address indexed enclaveAddress);
 
-    /// @notice Error for when a gateway already exists in the registry.
+    /// @notice Error for when the gateway with a given enclave address is already registered.
     error RelayGatewayAlreadyExists();
-    /// @notice Error for when an invalid gateway address is provided.
-    error RelayInvalidGateway();
-    /// @notice Error for when the provided signature timestamp is too old.
+    /// @notice Error for when the msg.sender isn't the gateway owner.
+    error RelayInvalidGatewayOwner();
+    /// @notice Error for when the signature has expired.
     error RelaySignatureTooOld();
-    /// @notice Error for when the signature is from an invalid signer.
+    /// @notice Error for when a given signature hasn't been signed by the gateway enclave.
     error RelayInvalidSigner();
 
     //-------------------------------- internal functions start --------------------------------//
@@ -247,7 +247,7 @@ contract Relay is
     }
 
     function _deregisterGateway(address _enclaveAddress, address _owner) internal {
-        if (gatewayOwners[_enclaveAddress] != _owner) revert RelayInvalidGateway();
+        if (gatewayOwners[_enclaveAddress] != _owner) revert RelayInvalidGatewayOwner();
 
         _revokeEnclaveKey(gatewayOwners[_enclaveAddress]);
         delete gatewayOwners[_enclaveAddress];
@@ -325,10 +325,10 @@ contract Relay is
      * @param codehash The transaction hash storing the code to be executed.
      * @param codeInputs The inputs for the code execution.
      * @param userTimeout The timeout specified by the user for the job.
-     * @param maxGasPrice The maximum gas price allowed for the job.
+     * @param maxGasPrice The maximum gas price allowed for the job response and callback method.
      * @param usdcDeposit The USDC deposit provided for the job.
      * @param callbackDeposit The callback deposit provided for the job.
-     * @param refundAccount The address where the refund will be sent.
+     * @param refundAccount The address where the slashed token will be sent on common chain.
      * @param callbackContract The address of the callback contract.
      * @param startTime The timestamp when the job was started.
      * @param callbackGasLimit The gas limit for the callback execution.
@@ -353,7 +353,7 @@ contract Relay is
      * @param output The output from the job execution.
      * @param totalTime The total time taken for the job execution.
      * @param errorCode The error code if the job failed.
-     * @param success A boolean indicating if the job was successful.
+     * @param success A boolean indicating if the callback was successful.
      */
     event JobResponded(uint256 indexed jobId, bytes output, uint256 totalTime, uint256 errorCode, bool success);
 
@@ -369,8 +369,6 @@ contract Relay is
     error RelayJobNotExists();
     /// @notice Error for when the overall timeout for a job has been exceeded.
     error RelayOverallTimeoutOver();
-    /// @notice Error for when the job owner is not valid.
-    error RelayInvalidJobOwner();
     /// @notice Error for when the overall timeout for a job has not yet been exceeded.
     error RelayOverallTimeoutNotOver();
     /// @notice Error for when the callback deposit transfer fails.
@@ -384,7 +382,7 @@ contract Relay is
 
     function _relayJob(
         bytes32 _codehash,
-        bytes memory _codeInputs,
+        bytes calldata _codeInputs,
         uint256 _userTimeout, // in milliseconds
         uint256 _maxGasPrice,
         uint256 _callbackDeposit,
@@ -509,12 +507,13 @@ contract Relay is
 
         // release escrow to gateway
         TOKEN.safeTransfer(gatewayOwners[_enclaveAddress], gatewayPayoutUsdc);
+        // release escrow to jobOwner
         TOKEN.safeTransfer(_jobOwner, jobOwnerPayoutUsdc);
     }
 
-    function _jobCancel(uint256 _jobId, address _jobOwner) internal {
-        Job storage job = jobs[_jobId];
-        if (job.jobOwner != _jobOwner) revert RelayInvalidJobOwner();
+    function _jobCancel(uint256 _jobId) internal {
+        Job memory job = jobs[_jobId];
+        if (job.jobOwner == address(0)) revert RelayJobNotExists();
 
         // check time case
         if (block.timestamp <= job.startTime + OVERALL_TIMEOUT) revert RelayOverallTimeoutNotOver();
@@ -524,10 +523,10 @@ contract Relay is
         delete jobs[_jobId];
 
         // return back escrow amount to the user
-        TOKEN.safeTransfer(_jobOwner, usdcDeposit);
+        TOKEN.safeTransfer(job.jobOwner, usdcDeposit);
 
         // return back callback deposit to the user
-        (bool success, ) = _jobOwner.call{value: callbackDeposit}("");
+        (bool success, ) = job.jobOwner.call{value: callbackDeposit}("");
         if (!success) revert RelayCallbackDepositTransferFailed();
 
         emit JobCancelled(_jobId);
@@ -580,7 +579,7 @@ contract Relay is
      * @dev The job parameters are validated before relaying to the enclave.
      *      The job escrow amount (USDC+ETH) is transferred to the contract.
      * @param _codehash The transaction hash storing the code to be executed by the enclave.
-     * @param _codeInputs The excrypted inputs to the code to be executed.
+     * @param _codeInputs The inputs to the code to be executed.
      * @param _userTimeout The maximum execution time allowed for the job in milliseconds.
      * @param _maxGasPrice The maximum gas price the job owner is willing to pay, to get back the job response.
      * @param _refundAccount The account to receive any slashed tokens.
@@ -589,7 +588,7 @@ contract Relay is
      */
     function relayJob(
         bytes32 _codehash,
-        bytes memory _codeInputs,
+        bytes calldata _codeInputs,
         uint256 _userTimeout,
         uint256 _maxGasPrice,
         address _refundAccount, // Common chain slashed token will be sent to this address
@@ -636,7 +635,7 @@ contract Relay is
      * @param _jobId The unique identifier of the job to be cancelled.
      */
     function jobCancel(uint256 _jobId) external {
-        _jobCancel(_jobId, _msgSender());
+        _jobCancel(_jobId);
     }
 
     //-------------------------------- external functions end --------------------------------//
