@@ -769,6 +769,14 @@ contract Relay is
         bool success
     );
 
+    /**
+     * @notice Emitted when job subscription is terminated.
+     * param jobSubsId The unique identifier of the job subscription.
+     */
+    event JobSubscriptionTerminated(
+        uint256 indexed jobSubsId
+    );
+
     /// @notice Error for when a job subscription is invalid.
     error RelayInvalidJobSubscription();
     /// @notice Error for when the current runs in job response jobId is invalid.
@@ -816,7 +824,7 @@ contract Relay is
         if (_maxGasPrice < tx.gasprice) 
             revert RelayInsufficientMaxGasPrice();
 
-        if(_startTimestamp == 0)
+        if(_startTimestamp < block.timestamp)
             _startTimestamp = block.timestamp;
 
         _validateDeposits(_userTimeout, _maxGasPrice, _callbackGasLimit, _periodicGap, _usdcDeposit, _startTimestamp, _terminationTimestamp);
@@ -1003,23 +1011,25 @@ contract Relay is
 
     function _depositJobSubscriptionFunds(
         uint256 _jobSubsId,
-        uint256 _usdcDeposit
+        uint256 _usdcDeposit,
+        uint256 _callbackDeposit
     ) internal {
         if(jobSubscriptions[_jobSubsId].job.jobOwner == address(0))
             revert RelayInvalidJobSubscription();
 
-        _depositTokens(_jobSubsId, _usdcDeposit);
+        _depositTokens(_jobSubsId, _usdcDeposit, _callbackDeposit);
     }
 
     function _depositTokens(
         uint256 _jobSubsId,
-        uint256 _usdcDeposit
+        uint256 _usdcDeposit,
+        uint256 _callbackDeposit
     ) internal {
         TOKEN.safeTransferFrom(_msgSender(), address(this), _usdcDeposit);
 
         jobSubscriptions[_jobSubsId].job.usdcDeposit += _usdcDeposit;
-        jobSubscriptions[_jobSubsId].job.callbackDeposit += msg.value;
-        emit JobSubscriptionFundsDeposited(_jobSubsId, _msgSender(), _usdcDeposit, msg.value);
+        jobSubscriptions[_jobSubsId].job.callbackDeposit += _callbackDeposit;
+        emit JobSubscriptionFundsDeposited(_jobSubsId, _msgSender(), _usdcDeposit, _callbackDeposit);
     }
 
     function _updateJobSubsJobParams(
@@ -1039,7 +1049,8 @@ contract Relay is
     function _updateJobSubsTerminationParams(
         uint256 _jobSubsId,
         uint256 _terminationTimestamp,
-        uint256 _usdcDeposit
+        uint256 _usdcDeposit,
+        uint256 _callbackDeposit
     ) internal {
         if(jobSubscriptions[_jobSubsId].job.jobOwner != _msgSender())
             revert RelayNotJobSubscriptionOwner();
@@ -1052,7 +1063,7 @@ contract Relay is
 
         // won't be executed if called from terminateJobSubscription()
         if(_terminationTimestamp > block.timestamp + OVERALL_TIMEOUT) {
-            _depositTokens(_jobSubsId, _usdcDeposit);
+            _depositTokens(_jobSubsId, _usdcDeposit, _callbackDeposit);
 
             JobSubscription memory jobSubs = jobSubscriptions[_jobSubsId];
             uint256 remainingRuns = (_terminationTimestamp - block.timestamp) / jobSubs.periodicGap;
@@ -1090,6 +1101,14 @@ contract Relay is
         (bool success, ) = _jobOwner.call{value: callbackAmount}("");
 
         emit JobSubscriptionFundsWithdrawn(_jobSubsId, _jobOwner, usdcAmount, callbackAmount, success);
+    }
+
+    function _terminateJobSubscription(
+        uint256 _jobSubsId
+    ) internal {
+        _updateJobSubsTerminationParams(_jobSubsId, block.timestamp + OVERALL_TIMEOUT, 0, 0);
+
+        emit JobSubscriptionTerminated(_jobSubsId);
     }
 
     //-------------------------------- internal functions end --------------------------------//
@@ -1173,7 +1192,7 @@ contract Relay is
         uint256 _jobSubsId,
         uint256 _usdcDeposit
     ) external payable {
-        _depositJobSubscriptionFunds(_jobSubsId, _usdcDeposit);
+        _depositJobSubscriptionFunds(_jobSubsId, _usdcDeposit, msg.value);
     }
 
     /**
@@ -1207,7 +1226,7 @@ contract Relay is
         uint256 _terminationTimestamp,
         uint256 _usdcDeposit
     ) external payable {
-        _updateJobSubsTerminationParams(_jobSubsId, _terminationTimestamp, _usdcDeposit);
+        _updateJobSubsTerminationParams(_jobSubsId, _terminationTimestamp, _usdcDeposit, msg.value);
     }
 
     /**
@@ -1228,7 +1247,7 @@ contract Relay is
     function terminateJobSubscription(
         uint256 _jobSubsId
     ) external {
-        _updateJobSubsTerminationParams(_jobSubsId, block.timestamp + OVERALL_TIMEOUT, 0);
+        _terminateJobSubscription(_jobSubsId);
     }
 
     //-------------------------------- external functions end --------------------------------//
