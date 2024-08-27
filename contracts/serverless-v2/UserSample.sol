@@ -78,6 +78,7 @@ contract UserSample is Ownable {
         bytes memory _codeInputs,
         uint256 _userTimeout,
         uint256 _maxGasPrice,
+        uint256 _callbackDeposit,
         address _refundAccount,
         address _callbackContract,
         uint256 _callbackGasLimit,
@@ -85,11 +86,11 @@ contract UserSample is Ownable {
         uint256 _usdcDeposit,
         uint256 _startTimestamp,
         uint256 _terminationTimestamp
-    ) external payable returns (bool) {
+    ) external returns (bool) {
         // usdcDeposit = _userTimeout * EXECUTION_FEE_PER_MS + GATEWAY_FEE_PER_JOB;
         token.safeIncreaseAllowance(relayAddress, _usdcDeposit);
 
-        (bool success, ) = relayAddress.call{value: msg.value}(
+        (bool success, ) = relayAddress.call{value: _callbackDeposit}(
             abi.encodeWithSignature(
                 "startJobSubscription(bytes32,bytes,uint256,uint256,address,address,uint256,uint256,uint256,uint256,uint256)",
                 _codehash,

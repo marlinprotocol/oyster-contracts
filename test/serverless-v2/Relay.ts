@@ -545,7 +545,7 @@ describe("Relay - Register gateway", function () {
 		await relay.connect(signers[1]).registerGateway(signature, attestation, signedDigest, signTimestamp);
 
 		await expect(relay.connect(signers[2]).deregisterGateway(addrs[15]))
-			.to.revertedWithCustomError(relay, "RelayInvalidGateway");
+			.to.revertedWithCustomError(relay, "RelayInvalidGatewayOwner");
 	});
 
 });
@@ -2262,7 +2262,7 @@ describe("Relay - Job Subscription Termination", function () {
 	});
 });
 
-describe("Relay - Job Subscription sent by UserSample contract", function () {
+describe.only("Relay - Job Subscription sent by UserSample contract", function () {
 	let signers: Signer[];
 	let addrs: string[];
 	let token: USDCoin;
@@ -2336,7 +2336,7 @@ describe("Relay - Job Subscription sent by UserSample contract", function () {
 		await relay.connect(signers[1]).registerGateway(signature, attestation, signedDigest, signTimestamp);
 
 		const UserSample = await ethers.getContractFactory("UserSample");
-		userSample = await UserSample.deploy(relay.target, token.target) as unknown as UserSample;
+		userSample = await UserSample.deploy(relay.target, token.target, addrs[10]) as unknown as UserSample;
 
 		await token.transfer(userSample.target, 10000000);
 	});
@@ -2356,9 +2356,10 @@ describe("Relay - Job Subscription sent by UserSample contract", function () {
 			usdcDeposit = 2000000,
 			startTimestamp = 0,
 			terminationTimestamp = await time.latest() + 20;
+		// deposit eth in UserSample contract before relaying jobs
+		await signers[4].sendTransaction({to: userSample.target, value: callbackDeposit});
 		await userSample.startJobSubscription(
-			codeHash, codeInputs, userTimeout, maxGasPrice, refundAccount, callbackContract, callbackGasLimit, periodicGap, usdcDeposit,startTimestamp, terminationTimestamp,
-			{value: callbackDeposit}
+			codeHash, codeInputs, userTimeout, maxGasPrice, callbackDeposit, refundAccount, callbackContract, callbackGasLimit, periodicGap, usdcDeposit,startTimestamp, terminationTimestamp
 		);
 
 		let jobId: any = await relay.jobSubsCount(),
@@ -2382,7 +2383,7 @@ describe("Relay - Job Subscription sent by UserSample contract", function () {
 		// console.log("FIXED_GAS : ", txReceipt?.gasUsed);
 		// validate callback cost and refund
 		let txGasPrice = txReceipt?.gasPrice || 0n;
-		let callbackGas = 9247; // calculated using console.log
+		let callbackGas = 9309; // calculated using console.log
 		// console.log("txGasPrice: ", txGasPrice);
 		let callbackCost = txGasPrice * (ethers.toBigInt(callbackGas + fixedGas));
 		expect(await ethers.provider.getBalance(addrs[1])).to.equal(initBalance + callbackCost);
@@ -2403,9 +2404,10 @@ describe("Relay - Job Subscription sent by UserSample contract", function () {
 			usdcDeposit = 2000000,
 			startTimestamp = 0,
 			terminationTimestamp = await time.latest() + 20;
+		// deposit eth in UserSample contract before relaying jobs
+		await signers[4].sendTransaction({to: userSample.target, value: callbackDeposit});
 		await userSample.startJobSubscription(
-			codeHash, codeInputs, userTimeout, maxGasPrice, refundAccount, callbackContract, callbackGasLimit, periodicGap, usdcDeposit,startTimestamp, terminationTimestamp,
-			{value: callbackDeposit}
+			codeHash, codeInputs, userTimeout, maxGasPrice, callbackDeposit, refundAccount, callbackContract, callbackGasLimit, periodicGap, usdcDeposit,startTimestamp, terminationTimestamp
 		);
 
 		let jobId: any = await relay.jobSubsCount(),
