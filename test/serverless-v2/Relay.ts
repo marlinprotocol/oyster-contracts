@@ -1170,7 +1170,6 @@ describe("Relay - Job sent by UserSample contract", function () {
 		let finalBalAddrs10 = await ethers.provider.getBalance(addrs[10]);
 		// console.log("user sample owner bal: ", formatUnits(finalBalAddrs10), formatUnits(initBalAddrs10))
 		expect(finalBalAddrs10).to.eq(initBalAddrs10 + userSampleBal - gasCost);
-
 	});
 
 	it("can submit response with gas price higher than maxGasPrice", async function () {
