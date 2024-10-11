@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import "../AttestationAutherUpgradeable.sol";
-import "../interfaces/IAttestationVerifier.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
+import {ERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
+import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import {AttestationAutherUpgradeable} from "../AttestationAutherUpgradeable.sol";
+import {IAttestationVerifier} from "../interfaces/IAttestationVerifier.sol";
 
 /**
  * @title Relay Contract
@@ -84,6 +84,7 @@ contract Relay is
     }
 
     /// @inheritdoc UUPSUpgradeable
+    // solhint-disable-next-line no-empty-blocks
     function _authorizeUpgrade(address /*account*/) internal view override onlyRole(DEFAULT_ADMIN_ROLE) {}
 
     //-------------------------------- Overrides end --------------------------------//
@@ -148,17 +149,17 @@ contract Relay is
 
     /**
      * @notice Whitelist an enclave image for use by gateways.
-     * @param PCR0 The first PCR value of the enclave image.
-     * @param PCR1 The second PCR value of the enclave image.
-     * @param PCR2 The third PCR value of the enclave image.
+     * @param pcr0 The first PCR value of the enclave image.
+     * @param pcr1 The second PCR value of the enclave image.
+     * @param pcr2 The third PCR value of the enclave image.
      * @return Computed image id and true if the image was freshly whitelisted, false otherwise.
      */
     function whitelistEnclaveImage(
-        bytes calldata PCR0,
-        bytes calldata PCR1,
-        bytes calldata PCR2
+        bytes calldata pcr0,
+        bytes calldata pcr1,
+        bytes calldata pcr2
     ) external onlyRole(DEFAULT_ADMIN_ROLE) returns (bytes32, bool) {
-        return _whitelistEnclaveImage(EnclaveImage(PCR0, PCR1, PCR2));
+        return _whitelistEnclaveImage(EnclaveImage(pcr0, pcr1, pcr2));
     }
 
     /**
@@ -617,6 +618,7 @@ contract Relay is
         TOKEN.safeTransfer(job.jobOwner, usdcDeposit);
 
         // return back callback deposit to the user
+        // solhint-disable-next-line avoid-low-level-calls
         (bool success, ) = job.jobOwner.call{value: callbackDeposit}("");
         if (!success) revert RelayCallbackDepositTransferFailed();
 
@@ -628,9 +630,10 @@ contract Relay is
         Job memory _job,
         bytes calldata _output,
         uint8 _errorCode
-    ) internal returns (bool success, uint callbackGas) {
+    ) internal returns (bool success, uint256 callbackGas) {
         if (tx.gasprice <= _job.maxGasPrice) {
-            uint startGas = gasleft();
+            uint256 startGas = gasleft();
+            // solhint-disable-next-line avoid-low-level-calls
             (success, ) = _job.callbackContract.call{gas: _job.callbackGasLimit}(
                 abi.encodeWithSignature(
                     "oysterResultCall(uint256,address,bytes32,bytes,bytes,uint8)",
@@ -656,8 +659,10 @@ contract Relay is
         // TODO: If paySuccess is false then deposit will be stucked forever. Find a way out.
         // transfer callback cost to gateway
         _callbackCost = _callbackCost > _callbackDeposit ? _callbackDeposit : _callbackCost;
+        // solhint-disable-next-line avoid-low-level-calls
         (bool paySuccess, ) = _gatewayOwner.call{value: _callbackCost}("");
         // transfer remaining native asset to the jobOwner
+        // solhint-disable-next-line avoid-low-level-calls
         (paySuccess, ) = _jobOwner.call{value: _callbackDeposit - _callbackCost}("");
     }
 

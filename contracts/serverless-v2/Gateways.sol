@@ -1,17 +1,16 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import "../AttestationAutherUpgradeable.sol";
-import "../interfaces/IAttestationVerifier.sol";
-import "./Jobs.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
+import {ERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
+import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import {AttestationAutherUpgradeable} from "../AttestationAutherUpgradeable.sol";
+import {IAttestationVerifier} from "../interfaces/IAttestationVerifier.sol";
 
 /**
  * @title Gateways Contract
@@ -73,6 +72,7 @@ contract Gateways is
     }
 
     /// @inheritdoc UUPSUpgradeable
+    // solhint-disable-next-line no-empty-blocks
     function _authorizeUpgrade(address /*account*/) internal view override onlyRole(DEFAULT_ADMIN_ROLE) {}
 
     //-------------------------------- Overrides end --------------------------------//
@@ -281,18 +281,18 @@ contract Gateways is
     /**
      * @notice Whitelists an enclave image by adding its PCR values.
      * @dev Can only be called by an account with the DEFAULT_ADMIN_ROLE.
-     * @param PCR0 The first PCR value of the enclave image.
-     * @param PCR1 The second PCR value of the enclave image.
-     * @param PCR2 The third PCR value of the enclave image.
+     * @param pcr0 The first PCR value of the enclave image.
+     * @param pcr1 The second PCR value of the enclave image.
+     * @param pcr2 The third PCR value of the enclave image.
      * @return bytes32 The unique identifier (hash) of the whitelisted enclave image.
      * @return bool Whether the whitelisting was successful.
      */
     function whitelistEnclaveImage(
-        bytes memory PCR0,
-        bytes memory PCR1,
-        bytes memory PCR2
+        bytes memory pcr0,
+        bytes memory pcr1,
+        bytes memory pcr2
     ) external onlyRole(DEFAULT_ADMIN_ROLE) returns (bytes32, bool) {
-        return _whitelistEnclaveImage(EnclaveImage(PCR0, PCR1, PCR2));
+        return _whitelistEnclaveImage(EnclaveImage(pcr0, pcr1, pcr2));
     }
 
     /**
