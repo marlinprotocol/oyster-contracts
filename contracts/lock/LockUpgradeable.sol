@@ -2,8 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 contract LockUpgradeable is
     Initializable // initializer
@@ -20,11 +19,12 @@ contract LockUpgradeable is
     }
 
     // keccak256(abi.encode(uint256(keccak256("marlin.oyster.storage.Lock")) - 1)) & ~bytes32(uint256(0xff))
-    bytes32 private constant LockStorageLocation = 0x2ba99b043df9e6db72821769dcc0757c8c1b1dc979dd0c3217f2e035fed90700;
+    bytes32 private constant LOCK_STORAGE_LOCATION = 0x2ba99b043df9e6db72821769dcc0757c8c1b1dc979dd0c3217f2e035fed90700;
 
     function _getLockStorage() private pure returns (LockStorage storage $) {
+        // solhint-disable-next-line no-inline-assembly
         assembly {
-            $.slot := LockStorageLocation
+            $.slot := LOCK_STORAGE_LOCATION
         }
     }
 
@@ -42,6 +42,7 @@ contract LockUpgradeable is
     event LockCreated(bytes32 indexed selector, bytes32 indexed key, uint256 iValue, uint256 unlockTime);
     event LockDeleted(bytes32 indexed selector, bytes32 indexed key, uint256 iValue);
 
+    // solhint-disable-next-line func-name-mixedcase
     function __Lock_init_unchained(
         bytes32[] memory _selectors,
         uint256[] memory _lockWaitTimes

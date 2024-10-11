@@ -2,13 +2,14 @@
 
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import "./AttestationAutherUpgradeable.sol";
+import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
+import {ERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
+import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {AttestationAutherUpgradeable} from "./AttestationAutherUpgradeable.sol";
+import {IAttestationVerifier} from "./interfaces/IAttestationVerifier.sol";
 
 contract AttestationAutherSampleUpgradeable is
     Initializable, // initializer
@@ -19,6 +20,7 @@ contract AttestationAutherSampleUpgradeable is
     AttestationAutherUpgradeable // auther
 {
     // in case we add more contracts in the inheritance chain
+    // solhint-disable-next-line var-name-mixedcase
     uint256[500] private __gap_0;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -39,6 +41,7 @@ contract AttestationAutherSampleUpgradeable is
         return super.supportsInterface(interfaceId);
     }
 
+    // solhint-disable-next-line no-empty-blocks
     function _authorizeUpgrade(address /*account*/) internal view override onlyRole(DEFAULT_ADMIN_ROLE) {}
 
     //-------------------------------- Overrides end --------------------------------//
@@ -83,11 +86,11 @@ contract AttestationAutherSampleUpgradeable is
     //-------------------------------- Admin methods start --------------------------------//
 
     function whitelistEnclaveImage(
-        bytes memory PCR0,
-        bytes memory PCR1,
-        bytes memory PCR2
+        bytes memory pcr0,
+        bytes memory pcr1,
+        bytes memory pcr2
     ) external onlyRole(DEFAULT_ADMIN_ROLE) returns (bytes32, bool) {
-        return _whitelistEnclaveImage(EnclaveImage(PCR0, PCR1, PCR2));
+        return _whitelistEnclaveImage(EnclaveImage(pcr0, pcr1, pcr2));
     }
 
     function revokeEnclaveImage(bytes32 imageId) external onlyRole(DEFAULT_ADMIN_ROLE) returns (bool) {

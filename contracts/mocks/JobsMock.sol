@@ -20,14 +20,16 @@ contract JobsMock {
         });
     }
 
+    /* solhint-disable no-unused-vars */
     function createJob(
         uint8 _env,
         bytes32 _codehash,
         bytes memory _codeInputs,
         uint256 _deadline // in milliseconds
-    ) external returns (uint256) {
+    ) external pure returns (uint256) {
         revert JobsMockError();
     }
+    /* solhint-enable no-unused-vars */
 
     function getJobExecutionFeePerMs(uint8 _env) public view returns (uint256) {
         return executionEnv[_env].executionFeePerMs + executionEnv[_env].stakingRewardPerMs;

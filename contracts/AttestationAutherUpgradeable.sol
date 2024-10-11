@@ -2,8 +2,8 @@
 
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "./interfaces/IAttestationVerifier.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {IAttestationVerifier} from "./interfaces/IAttestationVerifier.sol";
 
 /// @notice Contract that allows children to check if a given address belongs to a verified enclave.
 /// @dev The Oyster platform works on the basis of attestations to ensure security. These attestations contain a
@@ -40,9 +40,9 @@ contract AttestationAutherUpgradeable is
     }
 
     struct EnclaveImage {
-        bytes PCR0;
-        bytes PCR1;
-        bytes PCR2;
+        bytes pcr0;
+        bytes pcr1;
+        bytes pcr2;
     }
 
     /// @custom:storage-location erc7201:marlin.oyster.storage.AttestationAuther
@@ -53,12 +53,13 @@ contract AttestationAutherUpgradeable is
     }
 
     // keccak256(abi.encode(uint256(keccak256("marlin.oyster.storage.AttestationAuther")) - 1)) & ~bytes32(uint256(0xff))
-    bytes32 private constant AttestationAutherStorageLocation =
+    bytes32 private constant ATTESTATION_AUTHER_STORAGE_LOCATION =
         0xc17b4b708b6f44255c20913a9d97a05300b670342c71fe5ae5b617bd4db55000;
 
     function _getAttestationAutherStorage() private pure returns (AttestationAutherStorage storage $) {
+        // solhint-disable-next-line no-inline-assembly
         assembly {
-            $.slot := AttestationAutherStorageLocation
+            $.slot := ATTESTATION_AUTHER_STORAGE_LOCATION
         }
     }
 
@@ -77,8 +78,8 @@ contract AttestationAutherUpgradeable is
     /// @notice Expected the arrays to have equal lengths.
     error AttestationAutherMismatchedLengths();
 
-    /// @notice Emitted when enclave image `imageId` with PCRs `(PCR0,PCR1,PCR2)` is whitelisted.
-    event EnclaveImageWhitelisted(bytes32 indexed imageId, bytes PCR0, bytes PCR1, bytes PCR2);
+    /// @notice Emitted when enclave image `imageId` with PCRs `(pcr0,pcr1,pcr2)` is whitelisted.
+    event EnclaveImageWhitelisted(bytes32 indexed imageId, bytes pcr0, bytes pcr1, bytes pcr2);
     /// @notice Emitted when enclave image `imageId` is revoked.
     event EnclaveImageRevoked(bytes32 indexed imageId);
     /// @notice Emitted when enclave image `imageId` is added to `family`.
@@ -94,6 +95,7 @@ contract AttestationAutherUpgradeable is
 
     /// @notice Initializes the contract by whitelisting the provided enclave images.
     /// @param images Enclave images to be whitelisted.
+    // solhint-disable-next-line func-name-mixedcase
     function __AttestationAuther_init_unchained(EnclaveImage[] memory images) internal onlyInitializing {
         for (uint256 i = 0; i < images.length; i++) {
             _whitelistEnclaveImage(images[i]);
@@ -104,6 +106,7 @@ contract AttestationAutherUpgradeable is
     /// to the respective families.
     /// @param images Enclave images to be whitelisted.
     /// @param families Corresponding family for each enclave images.
+    // solhint-disable-next-line func-name-mixedcase
     function __AttestationAuther_init_unchained(
         EnclaveImage[] memory images,
         bytes32[] memory families
@@ -132,14 +135,14 @@ contract AttestationAutherUpgradeable is
     function _whitelistEnclaveImage(EnclaveImage memory image) internal virtual returns (bytes32, bool) {
         AttestationAutherStorage storage $ = _getAttestationAutherStorage();
 
-        if (!(image.PCR0.length == 48 && image.PCR1.length == 48 && image.PCR2.length == 48))
+        if (!(image.pcr0.length == 48 && image.pcr1.length == 48 && image.pcr2.length == 48))
             revert AttestationAutherPCRsInvalid();
 
-        bytes32 imageId = keccak256(abi.encodePacked(image.PCR0, image.PCR1, image.PCR2));
-        if (!($.whitelistedImages[imageId].PCR0.length == 0)) return (imageId, false);
+        bytes32 imageId = keccak256(abi.encodePacked(image.pcr0, image.pcr1, image.pcr2));
+        if (!($.whitelistedImages[imageId].pcr0.length == 0)) return (imageId, false);
 
-        $.whitelistedImages[imageId] = EnclaveImage(image.PCR0, image.PCR1, image.PCR2);
-        emit EnclaveImageWhitelisted(imageId, image.PCR0, image.PCR1, image.PCR2);
+        $.whitelistedImages[imageId] = EnclaveImage(image.pcr0, image.pcr1, image.pcr2);
+        emit EnclaveImageWhitelisted(imageId, image.pcr0, image.pcr1, image.pcr2);
 
         return (imageId, true);
     }
@@ -151,7 +154,7 @@ contract AttestationAutherUpgradeable is
     function _revokeEnclaveImage(bytes32 imageId) internal virtual returns (bool) {
         AttestationAutherStorage storage $ = _getAttestationAutherStorage();
 
-        if (!($.whitelistedImages[imageId].PCR0.length != 0)) return false;
+        if (!($.whitelistedImages[imageId].pcr0.length != 0)) return false;
 
         delete $.whitelistedImages[imageId];
         emit EnclaveImageRevoked(imageId);
@@ -199,7 +202,7 @@ contract AttestationAutherUpgradeable is
     function _whitelistEnclaveKey(bytes memory enclavePubKey, bytes32 imageId) internal virtual returns (bool) {
         AttestationAutherStorage storage $ = _getAttestationAutherStorage();
 
-        if (!($.whitelistedImages[imageId].PCR0.length != 0)) revert AttestationAutherImageNotWhitelisted();
+        if (!($.whitelistedImages[imageId].pcr0.length != 0)) revert AttestationAutherImageNotWhitelisted();
 
         address enclaveAddress = _pubKeyToAddress(enclavePubKey);
         if (!($.verifiedKeys[enclaveAddress] == bytes32(0))) return false;
@@ -236,8 +239,8 @@ contract AttestationAutherUpgradeable is
     ) internal virtual returns (bool) {
         AttestationAutherStorage storage $ = _getAttestationAutherStorage();
 
-        bytes32 imageId = keccak256(abi.encodePacked(attestation.PCR0, attestation.PCR1, attestation.PCR2));
-        if (!($.whitelistedImages[imageId].PCR0.length != 0)) revert AttestationAutherImageNotWhitelisted();
+        bytes32 imageId = keccak256(abi.encodePacked(attestation.pcr0, attestation.pcr1, attestation.pcr2));
+        if (!($.whitelistedImages[imageId].pcr0.length != 0)) revert AttestationAutherImageNotWhitelisted();
         if (!(attestation.timestampInMilliseconds / 1000 > block.timestamp - ATTESTATION_MAX_AGE))
             revert AttestationAutherAttestationTooOld();
 
@@ -271,7 +274,7 @@ contract AttestationAutherUpgradeable is
 
         bytes32 imageId = $.verifiedKeys[key];
         if (!(imageId != bytes32(0))) revert AttestationAutherKeyNotVerified();
-        if (!($.whitelistedImages[imageId].PCR0.length != 0)) revert AttestationAutherImageNotWhitelisted();
+        if (!($.whitelistedImages[imageId].pcr0.length != 0)) revert AttestationAutherImageNotWhitelisted();
     }
 
     /// @notice Returns only if the key is from a verified enclave of the given family, reverts otherwise.
@@ -282,7 +285,7 @@ contract AttestationAutherUpgradeable is
 
         bytes32 imageId = $.verifiedKeys[key];
         if (!(imageId != bytes32(0))) revert AttestationAutherKeyNotVerified();
-        if (!($.whitelistedImages[imageId].PCR0.length != 0)) revert AttestationAutherImageNotWhitelisted();
+        if (!($.whitelistedImages[imageId].pcr0.length != 0)) revert AttestationAutherImageNotWhitelisted();
         if (!($.imageFamilies[family][imageId])) revert AttestationAutherImageNotInFamily();
     }
 

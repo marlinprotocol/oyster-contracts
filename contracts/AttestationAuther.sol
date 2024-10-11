@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-import "./interfaces/IAttestationVerifier.sol";
+import {IAttestationVerifier} from "./interfaces/IAttestationVerifier.sol";
 
 /// @notice Contract that allows children to check if a given address belongs to a verified enclave.
 /// @dev The Oyster platform works on the basis of attestations to ensure security. These attestations contain a
@@ -25,14 +25,14 @@ contract AttestationAuther {
     uint256 public immutable ATTESTATION_MAX_AGE;
 
     struct EnclaveImage {
-        bytes PCR0;
-        bytes PCR1;
-        bytes PCR2;
+        bytes pcr0;
+        bytes pcr1;
+        bytes pcr2;
     }
 
-    mapping(bytes32 => EnclaveImage) whitelistedImages;
-    mapping(address => bytes32) verifiedKeys;
-    mapping(bytes32 => mapping(bytes32 => bool)) imageFamilies;
+    mapping(bytes32 => EnclaveImage) public whitelistedImages;
+    mapping(address => bytes32) public verifiedKeys;
+    mapping(bytes32 => mapping(bytes32 => bool)) public imageFamilies;
 
     /// @notice Expected a pubkey with length equal to 64.
     error AttestationAutherPubkeyLengthInvalid();
@@ -49,8 +49,8 @@ contract AttestationAuther {
     /// @notice Expected the arrays to have equal lengths.
     error AttestationAutherMismatchedLengths();
 
-    /// @notice Emitted when enclave image `imageId` with PCRs `(PCR0,PCR1,PCR2)` is whitelisted.
-    event EnclaveImageWhitelisted(bytes32 indexed imageId, bytes PCR0, bytes PCR1, bytes PCR2);
+    /// @notice Emitted when enclave image `imageId` with PCRs `(pcr0,pcr1,pcr2)` is whitelisted.
+    event EnclaveImageWhitelisted(bytes32 indexed imageId, bytes pcr0, bytes pcr1, bytes pcr2);
     /// @notice Emitted when enclave image `imageId` is revoked.
     event EnclaveImageRevoked(bytes32 indexed imageId);
     /// @notice Emitted when enclave image `imageId` is added to `family`.
@@ -76,6 +76,7 @@ contract AttestationAuther {
 
     /// @notice Initializes the contract by whitelisting the provided enclave images.
     /// @param images Enclave images to be whitelisted.
+    // solhint-disable-next-line func-name-mixedcase
     function __AttestationAuther_constructor(EnclaveImage[] memory images) internal {
         for (uint256 i = 0; i < images.length; i++) {
             _whitelistEnclaveImage(images[i]);
@@ -86,6 +87,7 @@ contract AttestationAuther {
     /// to the respective families.
     /// @param images Enclave images to be whitelisted.
     /// @param families Corresponding family for each enclave images.
+    // solhint-disable-next-line func-name-mixedcase
     function __AttestationAuther_constructor(EnclaveImage[] memory images, bytes32[] memory families) internal {
         if (!(images.length == families.length)) revert AttestationAutherMismatchedLengths();
         for (uint256 i = 0; i < images.length; i++) {
@@ -109,14 +111,14 @@ contract AttestationAuther {
     /// @param image Image to be whitelisted.
     /// @return Computed image id and true if the image was freshly whitelisted, false otherwise.
     function _whitelistEnclaveImage(EnclaveImage memory image) internal virtual returns (bytes32, bool) {
-        if (!(image.PCR0.length == 48 && image.PCR1.length == 48 && image.PCR2.length == 48))
+        if (!(image.pcr0.length == 48 && image.pcr1.length == 48 && image.pcr2.length == 48))
             revert AttestationAutherPCRsInvalid();
 
-        bytes32 imageId = keccak256(abi.encodePacked(image.PCR0, image.PCR1, image.PCR2));
-        if (!(whitelistedImages[imageId].PCR0.length == 0)) return (imageId, false);
+        bytes32 imageId = keccak256(abi.encodePacked(image.pcr0, image.pcr1, image.pcr2));
+        if (!(whitelistedImages[imageId].pcr0.length == 0)) return (imageId, false);
 
-        whitelistedImages[imageId] = EnclaveImage(image.PCR0, image.PCR1, image.PCR2);
-        emit EnclaveImageWhitelisted(imageId, image.PCR0, image.PCR1, image.PCR2);
+        whitelistedImages[imageId] = EnclaveImage(image.pcr0, image.pcr1, image.pcr2);
+        emit EnclaveImageWhitelisted(imageId, image.pcr0, image.pcr1, image.pcr2);
 
         return (imageId, true);
     }
@@ -126,7 +128,7 @@ contract AttestationAuther {
     /// @param imageId Image to be revoked.
     /// @return true if the image was freshly revoked, false otherwise.
     function _revokeEnclaveImage(bytes32 imageId) internal virtual returns (bool) {
-        if (!(whitelistedImages[imageId].PCR0.length != 0)) return false;
+        if (!(whitelistedImages[imageId].pcr0.length != 0)) return false;
 
         delete whitelistedImages[imageId];
         emit EnclaveImageRevoked(imageId);
@@ -168,7 +170,7 @@ contract AttestationAuther {
     /// @param imageId Image to be whitelisted against.
     /// @return true if the key was freshly whitelisted against the image, false otherwise.
     function _whitelistEnclaveKey(bytes memory enclavePubKey, bytes32 imageId) internal virtual returns (bool) {
-        if (!(whitelistedImages[imageId].PCR0.length != 0)) revert AttestationAutherImageNotWhitelisted();
+        if (!(whitelistedImages[imageId].pcr0.length != 0)) revert AttestationAutherImageNotWhitelisted();
 
         address enclaveAddress = _pubKeyToAddress(enclavePubKey);
         if (!(verifiedKeys[enclaveAddress] == bytes32(0))) return false;
@@ -201,8 +203,8 @@ contract AttestationAuther {
         bytes memory signature,
         IAttestationVerifier.Attestation memory attestation
     ) internal virtual returns (bool) {
-        bytes32 imageId = keccak256(abi.encodePacked(attestation.PCR0, attestation.PCR1, attestation.PCR2));
-        if (!(whitelistedImages[imageId].PCR0.length != 0)) revert AttestationAutherImageNotWhitelisted();
+        bytes32 imageId = keccak256(abi.encodePacked(attestation.pcr0, attestation.pcr1, attestation.pcr2));
+        if (!(whitelistedImages[imageId].pcr0.length != 0)) revert AttestationAutherImageNotWhitelisted();
         if (!(attestation.timestampInMilliseconds / 1000 > block.timestamp - ATTESTATION_MAX_AGE))
             revert AttestationAutherAttestationTooOld();
 
@@ -234,7 +236,7 @@ contract AttestationAuther {
     function _allowOnlyVerified(address key) internal view virtual {
         bytes32 imageId = verifiedKeys[key];
         if (!(imageId != bytes32(0))) revert AttestationAutherKeyNotVerified();
-        if (!(whitelistedImages[imageId].PCR0.length != 0)) revert AttestationAutherImageNotWhitelisted();
+        if (!(whitelistedImages[imageId].pcr0.length != 0)) revert AttestationAutherImageNotWhitelisted();
     }
 
     /// @notice Returns only if the key is from a verified enclave of the given family, reverts otherwise.
@@ -243,7 +245,7 @@ contract AttestationAuther {
     function _allowOnlyVerifiedFamily(address key, bytes32 family) internal view virtual {
         bytes32 imageId = verifiedKeys[key];
         if (!(imageId != bytes32(0))) revert AttestationAutherKeyNotVerified();
-        if (!(whitelistedImages[imageId].PCR0.length != 0)) revert AttestationAutherImageNotWhitelisted();
+        if (!(whitelistedImages[imageId].pcr0.length != 0)) revert AttestationAutherImageNotWhitelisted();
         if (!(imageFamilies[family][imageId])) revert AttestationAutherImageNotInFamily();
     }
 

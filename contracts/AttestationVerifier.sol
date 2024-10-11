@@ -2,13 +2,13 @@
 
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import "./interfaces/IAttestationVerifier.sol";
+import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
+import {ERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
+import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {IAttestationVerifier} from "./interfaces/IAttestationVerifier.sol";
 
 contract AttestationVerifier is
     Initializable, // initializer
@@ -19,6 +19,7 @@ contract AttestationVerifier is
     IAttestationVerifier // interface
 {
     // in case we add more contracts in the inheritance chain
+    // solhint-disable-next-line var-name-mixedcase
     uint256[500] private __gap_0;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -38,6 +39,7 @@ contract AttestationVerifier is
         return super.supportsInterface(interfaceId);
     }
 
+    // solhint-disable-next-line no-empty-blocks
     function _authorizeUpgrade(address /*account*/) internal view override onlyRole(DEFAULT_ADMIN_ROLE) {}
 
     //-------------------------------- Overrides end --------------------------------//
@@ -62,7 +64,7 @@ contract AttestationVerifier is
 
         _grantRole(DEFAULT_ADMIN_ROLE, _admin);
 
-        for (uint i = 0; i < enclaveKeys.length; i++) {
+        for (uint256 i = 0; i < enclaveKeys.length; i++) {
             (bytes32 imageId, ) = _whitelistEnclaveImage(images[i]);
             _whitelistEnclaveKey(enclaveKeys[i], imageId);
         }
@@ -73,9 +75,9 @@ contract AttestationVerifier is
     //-------------------------------- Declarations start --------------------------------//
 
     struct EnclaveImage {
-        bytes PCR0;
-        bytes PCR1;
-        bytes PCR2;
+        bytes pcr0;
+        bytes pcr1;
+        bytes pcr2;
     }
 
     // ImageId -> image details
@@ -83,6 +85,7 @@ contract AttestationVerifier is
     // enclaveAddress -> ImageId
     mapping(address => bytes32) public verifiedKeys;
 
+    // solhint-disable-next-line var-name-mixedcase
     uint256[48] private __gap_1;
 
     //-------------------------------- Declarations end --------------------------------//
@@ -95,7 +98,7 @@ contract AttestationVerifier is
     error AttestationVerifierImageNotWhitelisted();
     error AttestationVerifierKeyNotVerified();
 
-    event EnclaveImageWhitelisted(bytes32 indexed imageId, bytes PCR0, bytes PCR1, bytes PCR2);
+    event EnclaveImageWhitelisted(bytes32 indexed imageId, bytes pcr0, bytes pcr1, bytes pcr2);
     event EnclaveImageRevoked(bytes32 indexed imageId);
     event EnclaveKeyWhitelisted(address indexed enclaveAddress, bytes32 indexed imageId, bytes enclavePubKey);
     event EnclaveKeyRevoked(address indexed enclaveAddress);
@@ -113,20 +116,20 @@ contract AttestationVerifier is
     }
 
     function _whitelistEnclaveImage(EnclaveImage memory image) internal returns (bytes32, bool) {
-        if (!(image.PCR0.length == 48 && image.PCR1.length == 48 && image.PCR2.length == 48))
+        if (!(image.pcr0.length == 48 && image.pcr1.length == 48 && image.pcr2.length == 48))
             revert AttestationVerifierPCRsInvalid();
 
-        bytes32 imageId = keccak256(abi.encodePacked(image.PCR0, image.PCR1, image.PCR2));
-        if (!(whitelistedImages[imageId].PCR0.length == 0)) return (imageId, false);
+        bytes32 imageId = keccak256(abi.encodePacked(image.pcr0, image.pcr1, image.pcr2));
+        if (!(whitelistedImages[imageId].pcr0.length == 0)) return (imageId, false);
 
-        whitelistedImages[imageId] = EnclaveImage(image.PCR0, image.PCR1, image.PCR2);
-        emit EnclaveImageWhitelisted(imageId, image.PCR0, image.PCR1, image.PCR2);
+        whitelistedImages[imageId] = EnclaveImage(image.pcr0, image.pcr1, image.pcr2);
+        emit EnclaveImageWhitelisted(imageId, image.pcr0, image.pcr1, image.pcr2);
 
         return (imageId, true);
     }
 
     function _revokeEnclaveImage(bytes32 imageId) internal returns (bool) {
-        if (!(whitelistedImages[imageId].PCR0.length != 0)) return false;
+        if (!(whitelistedImages[imageId].pcr0.length != 0)) return false;
 
         delete whitelistedImages[imageId];
         emit EnclaveImageRevoked(imageId);
@@ -135,7 +138,7 @@ contract AttestationVerifier is
     }
 
     function _whitelistEnclaveKey(bytes memory enclavePubKey, bytes32 imageId) internal returns (bool) {
-        if (!(whitelistedImages[imageId].PCR0.length != 0)) revert AttestationVerifierImageNotWhitelisted();
+        if (!(whitelistedImages[imageId].pcr0.length != 0)) revert AttestationVerifierImageNotWhitelisted();
 
         address enclaveAddress = _pubKeyToAddress(enclavePubKey);
         if (!(verifiedKeys[enclaveAddress] == bytes32(0))) return false;
@@ -156,11 +159,11 @@ contract AttestationVerifier is
     }
 
     function whitelistEnclaveImage(
-        bytes memory PCR0,
-        bytes memory PCR1,
-        bytes memory PCR2
+        bytes memory pcr0,
+        bytes memory pcr1,
+        bytes memory pcr2
     ) external onlyRole(DEFAULT_ADMIN_ROLE) returns (bytes32, bool) {
-        return _whitelistEnclaveImage(EnclaveImage(PCR0, PCR1, PCR2));
+        return _whitelistEnclaveImage(EnclaveImage(pcr0, pcr1, pcr2));
     }
 
     function revokeEnclaveImage(bytes32 imageId) external onlyRole(DEFAULT_ADMIN_ROLE) returns (bool) {
@@ -189,8 +192,8 @@ contract AttestationVerifier is
     function _verifyEnclaveKey(bytes memory signature, Attestation memory attestation) internal returns (bool) {
         if (!(attestation.timestampInMilliseconds / 1000 > block.timestamp - MAX_AGE))
             revert AttestationVerifierAttestationTooOld();
-        bytes32 imageId = keccak256(abi.encodePacked(attestation.PCR0, attestation.PCR1, attestation.PCR2));
-        if (!(whitelistedImages[imageId].PCR0.length != 0)) revert AttestationVerifierImageNotWhitelisted();
+        bytes32 imageId = keccak256(abi.encodePacked(attestation.pcr0, attestation.pcr1, attestation.pcr2));
+        if (!(whitelistedImages[imageId].pcr0.length != 0)) revert AttestationVerifierImageNotWhitelisted();
 
         _verify(signature, attestation);
 
@@ -228,9 +231,9 @@ contract AttestationVerifier is
             abi.encode(
                 ATTESTATION_TYPEHASH,
                 keccak256(attestation.enclavePubKey),
-                keccak256(attestation.PCR0),
-                keccak256(attestation.PCR1),
-                keccak256(attestation.PCR2),
+                keccak256(attestation.pcr0),
+                keccak256(attestation.pcr1),
+                keccak256(attestation.pcr2),
                 attestation.timestampInMilliseconds
             )
         );
@@ -240,7 +243,7 @@ contract AttestationVerifier is
         bytes32 imageId = verifiedKeys[signer];
 
         if (!(imageId != bytes32(0))) revert AttestationVerifierKeyNotVerified();
-        if (!(whitelistedImages[imageId].PCR0.length != 0)) revert AttestationVerifierImageNotWhitelisted();
+        if (!(whitelistedImages[imageId].pcr0.length != 0)) revert AttestationVerifierImageNotWhitelisted();
     }
 
     function verify(bytes memory signature, Attestation memory attestation) external view {

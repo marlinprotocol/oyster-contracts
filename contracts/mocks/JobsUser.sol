@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 contract JobsUser {
     using SafeERC20 for IERC20;
@@ -30,6 +30,7 @@ contract JobsUser {
     ) external payable returns (bool success) {
         token.safeIncreaseAllowance(jobs, _usdcDeposit);
 
+        // solhint-disable-next-line avoid-low-level-calls
         (bool _success, ) = jobs.call(
             abi.encodeWithSignature(
                 "createJob(uint8,bytes32,bytes,uint256)",

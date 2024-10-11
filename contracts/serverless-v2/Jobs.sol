@@ -1,14 +1,15 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "./Executors.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
+import {ERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
+import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import {Executors} from "./Executors.sol";
 
 /**
  * @title Jobs Contract
@@ -80,6 +81,7 @@ contract Jobs is
     }
 
     /// @inheritdoc UUPSUpgradeable
+    // solhint-disable-next-line no-empty-blocks
     function _authorizeUpgrade(address /*account*/) internal view override onlyRole(DEFAULT_ADMIN_ROLE) {}
 
     //-------------------------------- Overrides end --------------------------------//
@@ -288,16 +290,16 @@ contract Jobs is
     /**
      * @dev Emitted when the job result callback is called.
      * @param jobId The ID of the job.
-     * @param callback_success Boolean indicating if the callback was successful.
+     * @param callbackSuccess Boolean indicating if the callback was successful.
      */
-    event JobResultCallbackCalled(uint256 indexed jobId, bool callback_success);
+    event JobResultCallbackCalled(uint256 indexed jobId, bool callbackSuccess);
 
     /**
      * @dev Emitted when the job failure callback is called.
      * @param jobId The ID of the job.
-     * @param callback_success Boolean indicating if the callback was successful.
+     * @param callbackSuccess Boolean indicating if the callback was successful.
      */
-    event JobFailureCallbackCalled(uint256 indexed jobId, bool callback_success);
+    event JobFailureCallbackCalled(uint256 indexed jobId, bool callbackSuccess);
 
     /// @notice Thrown when the signature is too old.
     error JobsSignatureTooOld();
@@ -384,6 +386,7 @@ contract Jobs is
         // TODO: add callback gas
         if (outputCount == 1) {
             address jobOwner = jobs[_jobId].jobOwner;
+            // solhint-disable-next-line avoid-low-level-calls
             (bool success, ) = jobOwner.call(
                 abi.encodeWithSignature(
                     "oysterResultCall(uint256,bytes,uint8,uint256)",
@@ -566,6 +569,7 @@ contract Jobs is
             // transfer the slashed amount to job owner
             STAKING_TOKEN.safeTransfer(jobOwner, slashAmount);
             // TODO: add gas limit
+            // solhint-disable-next-line avoid-low-level-calls
             (bool success, ) = jobOwner.call(
                 abi.encodeWithSignature("oysterFailureCall(uint256,uint256)", _jobId, slashAmount)
             );

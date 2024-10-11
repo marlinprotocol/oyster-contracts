@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import "./Gateways.sol";
-import "./Jobs.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
+import {ERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
+import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import {Gateways} from "./Gateways.sol";
+import {Jobs} from "./Jobs.sol";
 
 /**
  * @title GatewayJobs Contract
@@ -84,6 +84,7 @@ contract GatewayJobs is
     }
 
     /// @inheritdoc UUPSUpgradeable
+    // solhint-disable-next-line no-empty-blocks
     function _authorizeUpgrade(address /*account*/) internal view override onlyRole(DEFAULT_ADMIN_ROLE) {}
 
     //-------------------------------- Overrides end --------------------------------//
@@ -552,7 +553,7 @@ contract GatewayJobs is
     }
 
     function _oysterFailureCall(uint256 _execJobId, uint256 _slashAmount) internal {
-        uint jobId = execJobs[_execJobId];
+        uint256 jobId = execJobs[_execJobId];
         address gateway = relayJobs[jobId].gateway;
         uint256 usdcDeposit = relayJobs[jobId].usdcDeposit;
         address jobOwner = relayJobs[jobId].jobOwner;

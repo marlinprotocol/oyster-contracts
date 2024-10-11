@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "./RelaySubscriptions.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {RelaySubscriptions} from "./RelaySubscriptions.sol";
 
 contract UserSample is Ownable {
     using SafeERC20 for IERC20;
@@ -56,6 +56,7 @@ contract UserSample is Ownable {
         // usdcDeposit = _userTimeout * EXECUTION_FEE_PER_MS + GATEWAY_FEE_PER_JOB;
         token.safeIncreaseAllowance(relayAddress, _usdcDeposit);
 
+        // solhint-disable-next-line avoid-low-level-calls
         (bool success, ) = relayAddress.call{value: _callbackDeposit}(
             abi.encodeWithSignature(
                 "relayJob(uint8,bytes32,bytes,uint256,uint256,address,address,uint256)",
@@ -90,6 +91,7 @@ contract UserSample is Ownable {
         // usdcDeposit = _userTimeout * EXECUTION_FEE_PER_MS + GATEWAY_FEE_PER_JOB;
         token.safeIncreaseAllowance(relaySubscriptionsAddress, _jobSubsParams.usdcDeposit);
 
+        // solhint-disable-next-line avoid-low-level-calls
         (bool success, ) = relaySubscriptionsAddress.call{value: _callbackDeposit}(
             abi.encodeWithSignature(
                 "startJobSubscription((uint8,uint256,uint256,uint256,uint256,address,bytes32,bytes,uint256,uint256,uint256,address))",
@@ -100,6 +102,7 @@ contract UserSample is Ownable {
     }
 
     function withdrawEth() external onlyOwner {
+        // solhint-disable-next-line avoid-low-level-calls
         (bool success, ) = msg.sender.call{value: address(this).balance}("");
         if (!success) revert EthWithdrawalFailed();
 
