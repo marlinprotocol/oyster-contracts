@@ -17,7 +17,7 @@ contract AttestationVerifierRiscZeroImmutable {
         IRiscZeroVerifier _verifier,
         bytes32 _imageId,
         bytes32 _journalDigest,
-        bytes calldata _seal
+        bytes memory _seal
     ) internal view {
         require(_imageId == IMAGE_ID, AttestationVerifierRiscZeroImmutableImageMismatch());
 
@@ -30,6 +30,14 @@ contract AttestationVerifierRiscZeroImmutable {
         bytes32 _journalDigest,
         bytes calldata _seal
     ) external view {
+        _verify(_verifier, _imageId, _journalDigest, _seal);
+    }
+
+    function verify(bytes calldata _data) external view {
+        (IRiscZeroVerifier _verifier, bytes32 _imageId, bytes32 _journalDigest, bytes memory _seal) = abi.decode(
+            _data,
+            (IRiscZeroVerifier, bytes32, bytes32, bytes)
+        );
         _verify(_verifier, _imageId, _journalDigest, _seal);
     }
 }
