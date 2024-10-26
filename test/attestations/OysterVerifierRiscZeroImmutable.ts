@@ -62,6 +62,17 @@ describe("OysterVerifierRiscZeroImmutable - Verify", function() {
       contract.verify(id("some image"), await mock.getAddress(), id("some journal"), id("some seal")),
     ).to.be.revertedWith("verification failed");
   });
+
+  it("reverts if image does not match", async function() {
+    const Mock = await ethers.getContractFactory("MockRiscZeroVerifier");
+    let mock = await Mock.deploy();
+    await mock.setFail(false);
+    await mock.setExpectedCall(id("some seal"), id("some image"), id("some journal"));
+
+    await expect(
+      contract.verify(id("some other image"), await mock.getAddress(), id("some journal"), id("some seal")),
+    ).to.be.revertedWithCustomError(contract, "OysterVerifierRiscZeroUnknownImage");
+  });
 });
 
 describe("OysterVerifierRiscZeroImmutable - Verify bytes", function() {
@@ -111,5 +122,21 @@ describe("OysterVerifierRiscZeroImmutable - Verify bytes", function() {
         ),
       ),
     ).to.be.revertedWith("verification failed");
+  });
+
+  it("reverts if image does not match", async function() {
+    const Mock = await ethers.getContractFactory("MockRiscZeroVerifier");
+    let mock = await Mock.deploy();
+    await mock.setFail(false);
+    await mock.setExpectedCall(id("some seal"), id("some image"), id("some journal"));
+
+    await expect(
+      contract.verify(
+        AbiCoder.defaultAbiCoder().encode(
+          ["bytes32", "address", "bytes32", "bytes"],
+          [id("some other image"), await mock.getAddress(), id("some journal"), id("some seal")],
+        ),
+      ),
+    ).to.be.revertedWithCustomError(contract, "OysterVerifierRiscZeroUnknownImage");
   });
 });
