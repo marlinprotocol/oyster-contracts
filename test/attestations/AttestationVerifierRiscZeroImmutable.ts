@@ -49,8 +49,8 @@ describe("AttestationVerifierRiscZeroImmutable - Verify", function() {
     await mock.setFail(false);
     await mock.setExpectedCall(id("some seal"), id("some image"), id("some journal"));
 
-    await expect(contract.verify(await mock.getAddress(), id("some image"), id("some journal"), id("some seal")))
-      .to.not.be.reverted;
+    await expect(contract.verify(await mock.getAddress(), id("some image"), id("some journal"), id("some seal"))).to.not
+      .be.reverted;
   });
 
   it("reverts if verifier reverts", async function() {
@@ -58,8 +58,9 @@ describe("AttestationVerifierRiscZeroImmutable - Verify", function() {
     let mock = await Mock.deploy();
     await mock.setFail(true);
 
-    await expect(contract.verify(await mock.getAddress(), id("some image"), id("some journal"), id("some seal")))
-      .to.be.revertedWith("verification failed");
+    await expect(
+      contract.verify(await mock.getAddress(), id("some image"), id("some journal"), id("some seal")),
+    ).to.be.revertedWith("verification failed");
   });
 });
 
@@ -87,8 +88,14 @@ describe("AttestationVerifierRiscZeroImmutable - Verify bytes", function() {
     await mock.setFail(false);
     await mock.setExpectedCall(id("some seal"), id("some image"), id("some journal"));
 
-    await expect(contract.verify(AbiCoder.defaultAbiCoder().encode(["address", "bytes32", "bytes32", "bytes"], [await mock.getAddress(), id("some image"), id("some journal"), id("some seal")])))
-      .to.not.be.reverted;
+    await expect(
+      contract.verify(
+        AbiCoder.defaultAbiCoder().encode(
+          ["address", "bytes32", "bytes32", "bytes"],
+          [await mock.getAddress(), id("some image"), id("some journal"), id("some seal")],
+        ),
+      ),
+    ).to.not.be.reverted;
   });
 
   it("reverts if verifier reverts", async function() {
@@ -96,7 +103,13 @@ describe("AttestationVerifierRiscZeroImmutable - Verify bytes", function() {
     let mock = await Mock.deploy();
     await mock.setFail(true);
 
-    await expect(contract.verify(AbiCoder.defaultAbiCoder().encode(["address", "bytes32", "bytes32", "bytes"], [await mock.getAddress(), id("some image"), id("some journal"), id("some seal")])))
-      .to.be.revertedWith("verification failed");
+    await expect(
+      contract.verify(
+        AbiCoder.defaultAbiCoder().encode(
+          ["address", "bytes32", "bytes32", "bytes"],
+          [await mock.getAddress(), id("some image"), id("some journal"), id("some seal")],
+        ),
+      ),
+    ).to.be.revertedWith("verification failed");
   });
 });
