@@ -2,9 +2,9 @@
 
 pragma solidity ^0.8.27;
 
-import "./IRiscZeroVerifier.sol";
+import "./IAttestationVerifierRiscZero.sol";
 
-contract AttestationVerifierRiscZeroImmutable {
+contract AttestationVerifierRiscZeroImmutable is IAttestationVerifierRiscZero {
     bytes32 public immutable IMAGE_ID;
 
     constructor(bytes32 imageId) {
@@ -14,8 +14,8 @@ contract AttestationVerifierRiscZeroImmutable {
     error AttestationVerifierRiscZeroImmutableImageMismatch();
 
     function _verify(
-        IRiscZeroVerifier _verifier,
         bytes32 _imageId,
+        IRiscZeroVerifier _verifier,
         bytes32 _journalDigest,
         bytes memory _seal
     ) internal view {
@@ -25,19 +25,19 @@ contract AttestationVerifierRiscZeroImmutable {
     }
 
     function verify(
-        IRiscZeroVerifier _verifier,
         bytes32 _imageId,
+        IRiscZeroVerifier _verifier,
         bytes32 _journalDigest,
         bytes calldata _seal
     ) external view {
-        _verify(_verifier, _imageId, _journalDigest, _seal);
+        _verify(_imageId, _verifier, _journalDigest, _seal);
     }
 
     function verify(bytes calldata _data) external view {
-        (IRiscZeroVerifier _verifier, bytes32 _imageId, bytes32 _journalDigest, bytes memory _seal) = abi.decode(
+        (bytes32 _imageId, IRiscZeroVerifier _verifier, bytes32 _journalDigest, bytes memory _seal) = abi.decode(
             _data,
-            (IRiscZeroVerifier, bytes32, bytes32, bytes)
+            (bytes32, IRiscZeroVerifier, bytes32, bytes)
         );
-        _verify(_verifier, _imageId, _journalDigest, _seal);
+        _verify(_imageId, _verifier, _journalDigest, _seal);
     }
 }
