@@ -2,16 +2,14 @@
 
 pragma solidity ^0.8.27;
 
-import "./IAttestationVerifierRiscZero.sol";
+import "./IOysterVerifierRiscZero.sol";
 
-contract AttestationVerifierRiscZeroImmutable is IAttestationVerifierRiscZero {
+contract OysterVerifierRiscZeroImmutable is IOysterVerifierRiscZero {
     bytes32 public immutable IMAGE_ID;
 
     constructor(bytes32 imageId) {
         IMAGE_ID = imageId;
     }
-
-    error AttestationVerifierRiscZeroImmutableImageMismatch();
 
     function _verify(
         bytes32 _imageId,
@@ -19,7 +17,7 @@ contract AttestationVerifierRiscZeroImmutable is IAttestationVerifierRiscZero {
         bytes32 _journalDigest,
         bytes memory _seal
     ) internal view {
-        require(_imageId == IMAGE_ID, AttestationVerifierRiscZeroImmutableImageMismatch());
+        require(_imageId == IMAGE_ID, OysterVerifierRiscZeroUnknownImage());
 
         _verifier.verify(_seal, _imageId, _journalDigest);
     }
