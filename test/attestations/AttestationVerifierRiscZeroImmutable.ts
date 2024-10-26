@@ -49,7 +49,7 @@ describe("AttestationVerifierRiscZeroImmutable - Verify", function() {
     await mock.setFail(false);
     await mock.setExpectedCall(id("some seal"), id("some image"), id("some journal"));
 
-    await expect(contract.verify(await mock.getAddress(), id("some image"), id("some journal"), id("some seal"))).to.not
+    await expect(contract.verify(id("some image"), await mock.getAddress(), id("some journal"), id("some seal"))).to.not
       .be.reverted;
   });
 
@@ -59,7 +59,7 @@ describe("AttestationVerifierRiscZeroImmutable - Verify", function() {
     await mock.setFail(true);
 
     await expect(
-      contract.verify(await mock.getAddress(), id("some image"), id("some journal"), id("some seal")),
+      contract.verify(id("some image"), await mock.getAddress(), id("some journal"), id("some seal")),
     ).to.be.revertedWith("verification failed");
   });
 });
@@ -91,8 +91,8 @@ describe("AttestationVerifierRiscZeroImmutable - Verify bytes", function() {
     await expect(
       contract.verify(
         AbiCoder.defaultAbiCoder().encode(
-          ["address", "bytes32", "bytes32", "bytes"],
-          [await mock.getAddress(), id("some image"), id("some journal"), id("some seal")],
+          ["bytes32", "address", "bytes32", "bytes"],
+          [id("some image"), await mock.getAddress(), id("some journal"), id("some seal")],
         ),
       ),
     ).to.not.be.reverted;
@@ -106,8 +106,8 @@ describe("AttestationVerifierRiscZeroImmutable - Verify bytes", function() {
     await expect(
       contract.verify(
         AbiCoder.defaultAbiCoder().encode(
-          ["address", "bytes32", "bytes32", "bytes"],
-          [await mock.getAddress(), id("some image"), id("some journal"), id("some seal")],
+          ["bytes32", "address", "bytes32", "bytes"],
+          [id("some image"), await mock.getAddress(), id("some journal"), id("some seal")],
         ),
       ),
     ).to.be.revertedWith("verification failed");
