@@ -2,11 +2,11 @@ import { id, Signer, AbiCoder } from "ethers";
 import { ethers } from "hardhat";
 import { expect } from "chai";
 
-import { AttestationVerifierRiscZeroImmutable } from "../../typechain-types";
+import { OysterVerifierRiscZeroImmutable } from "../../typechain-types";
 
 import { takeSnapshotBeforeAndAfterEveryTest } from "../../utils/testSuite";
 
-describe("AttestationVerifierRiscZeroImmutable - Init", function() {
+describe("OysterVerifierRiscZeroImmutable - Init", function() {
   let signers: Signer[];
   let addrs: string[];
 
@@ -18,25 +18,25 @@ describe("AttestationVerifierRiscZeroImmutable - Init", function() {
   takeSnapshotBeforeAndAfterEveryTest(async () => { });
 
   it("deploys", async function() {
-    const Contract = await ethers.getContractFactory("AttestationVerifierRiscZeroImmutable");
-    const contract = (await Contract.deploy(id("some image"))) as unknown as AttestationVerifierRiscZeroImmutable;
+    const Contract = await ethers.getContractFactory("OysterVerifierRiscZeroImmutable");
+    const contract = (await Contract.deploy(id("some image"))) as unknown as OysterVerifierRiscZeroImmutable;
 
     expect(await contract.IMAGE_ID()).to.equal(id("some image"));
   });
 });
 
-describe("AttestationVerifierRiscZeroImmutable - Verify", function() {
+describe("OysterVerifierRiscZeroImmutable - Verify", function() {
   let signers: Signer[];
   let addrs: string[];
 
-  let contract: AttestationVerifierRiscZeroImmutable;
+  let contract: OysterVerifierRiscZeroImmutable;
 
   before(async function() {
     signers = await ethers.getSigners();
     addrs = await Promise.all(signers.map((a) => a.getAddress()));
 
-    const Contract = await ethers.getContractFactory("AttestationVerifierRiscZeroImmutable");
-    contract = (await Contract.deploy(id("some image"))) as unknown as AttestationVerifierRiscZeroImmutable;
+    const Contract = await ethers.getContractFactory("OysterVerifierRiscZeroImmutable");
+    contract = (await Contract.deploy(id("some image"))) as unknown as OysterVerifierRiscZeroImmutable;
 
     expect(await contract.IMAGE_ID()).to.equal(id("some image"));
   });
@@ -64,18 +64,18 @@ describe("AttestationVerifierRiscZeroImmutable - Verify", function() {
   });
 });
 
-describe("AttestationVerifierRiscZeroImmutable - Verify bytes", function() {
+describe("OysterVerifierRiscZeroImmutable - Verify bytes", function() {
   let signers: Signer[];
   let addrs: string[];
 
-  let contract: AttestationVerifierRiscZeroImmutable;
+  let contract: OysterVerifierRiscZeroImmutable;
 
   before(async function() {
     signers = await ethers.getSigners();
     addrs = await Promise.all(signers.map((a) => a.getAddress()));
 
-    const Contract = await ethers.getContractFactory("AttestationVerifierRiscZeroImmutable");
-    contract = (await Contract.deploy(id("some image"))) as unknown as AttestationVerifierRiscZeroImmutable;
+    const Contract = await ethers.getContractFactory("OysterVerifierRiscZeroImmutable");
+    contract = (await Contract.deploy(id("some image"))) as unknown as OysterVerifierRiscZeroImmutable;
 
     expect(await contract.IMAGE_ID()).to.equal(id("some image"));
   });
