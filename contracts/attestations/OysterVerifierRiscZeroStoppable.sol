@@ -41,13 +41,13 @@ contract OysterVerifierRiscZeroStoppable is IOysterVerifierRiscZero, Ownable, Pa
         IRiscZeroVerifier _verifier,
         bytes32 _journalDigest,
         bytes calldata _seal
-    ) external view {
+    ) external view whenNotPaused {
         VERIFIER.verify(_imageId, _verifier, _journalDigest, _seal);
     }
 
     /// @notice Verifies a proof generated using a specific RiscZero guest image
     /// @param _data ABI encoded parameters
-    function verify(bytes calldata _data) external view {
+    function verify(bytes calldata _data) external view whenNotPaused {
         VERIFIER.verify(_data);
     }
 }
