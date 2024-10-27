@@ -29,7 +29,57 @@ describe("OysterVerifierRiscZeroStoppable - Init", function() {
   it("does not deploy with zero owner", async function() {
     const Contract = await ethers.getContractFactory("OysterVerifierRiscZeroStoppable");
 
-    await expect(Contract.deploy(addrs[10], ZeroAddress)).to.be.revertedWithCustomError(Contract, "OwnableInvalidOwner");
+    await expect(Contract.deploy(addrs[10], ZeroAddress)).to.be.revertedWithCustomError(
+      Contract,
+      "OwnableInvalidOwner",
+    );
+  });
+});
+
+describe("OysterVerifierRiscZeroStoppable - Pause", function() {
+  let signers: Signer[];
+  let addrs: string[];
+
+  let contract: OysterVerifierRiscZeroStoppable;
+
+  before(async function() {
+    signers = await ethers.getSigners();
+    addrs = await Promise.all(signers.map((a) => a.getAddress()));
+
+    const Contract = await ethers.getContractFactory("OysterVerifierRiscZeroStoppable");
+    contract = (await Contract.deploy(addrs[10], addrs[1])) as unknown as OysterVerifierRiscZeroStoppable;
+
+    expect(await contract.VERIFIER()).to.equal(addrs[10]);
+    expect(await contract.owner()).to.equal(addrs[1]);
+    expect(await contract.paused()).to.equal(false);
+  });
+
+  takeSnapshotBeforeAndAfterEveryTest(async () => { });
+
+  it("admin can pause", async function() {
+    await contract.connect(signers[1]).pause();
+
+    expect(await contract.paused()).to.equal(true);
+  });
+
+  it("admin can pause after unpause", async function() {
+    await contract.connect(signers[1]).pause();
+    await contract.connect(signers[1]).unpause();
+    expect(await contract.paused()).to.equal(false);
+
+    await contract.connect(signers[1]).pause();
+
+    expect(await contract.paused()).to.equal(true);
+  });
+
+  it("admin cannot pause when already paused", async function() {
+    await contract.connect(signers[1]).pause();
+
+    await expect(contract.connect(signers[1]).pause()).to.be.revertedWithCustomError(contract, "EnforcedPause");
+  });
+
+  it("non admin cannot pause", async function() {
+    await expect(contract.pause()).to.be.revertedWithCustomError(contract, "OwnableUnauthorizedAccount");
   });
 });
 
