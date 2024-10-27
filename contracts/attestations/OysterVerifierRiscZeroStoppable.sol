@@ -12,7 +12,7 @@ contract OysterVerifierRiscZeroStoppable is IOysterVerifierRiscZero {
     IOysterVerifierRiscZero public immutable VERIFIER;
 
     /// @notice Constructs the OysterVerifierRiscZeroStoppable contract
-    /// @param _imageId The RiscZero guest image id
+    /// @param _verifier The immutable verifier to forward calls to
     constructor(IOysterVerifierRiscZero _verifier) {
         VERIFIER = _verifier;
     }
