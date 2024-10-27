@@ -3,12 +3,14 @@
 pragma solidity ^0.8.27;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/Pausable.sol";
 import "./IOysterVerifierRiscZero.sol";
 
 /// @title OysterVerifierRiscZeroStoppable
 /// @notice Contract for verifying proofs generated using a specific RiscZero guest image.
-/// The contract is stoppable by the contract owner to be used primarily in case bugs are found.
-contract OysterVerifierRiscZeroStoppable is IOysterVerifierRiscZero, Ownable {
+/// The contract is pausable and unpausable by the contract owner.
+/// It is meant to be used primarily in case bugs are found in the guest.
+contract OysterVerifierRiscZeroStoppable is IOysterVerifierRiscZero, Ownable, Pausable {
     /// @notice The RiscZero guest image id
     IOysterVerifierRiscZero public immutable VERIFIER;
 
@@ -17,6 +19,16 @@ contract OysterVerifierRiscZeroStoppable is IOysterVerifierRiscZero, Ownable {
     /// @param _owner The address to be set as the owner of the contract
     constructor(IOysterVerifierRiscZero _verifier, address _owner) Ownable(_owner) {
         VERIFIER = _verifier;
+    }
+
+    /// @notice Allows the owner to pause the contract
+    function pause() external onlyOwner {
+        _pause();
+    }
+
+    /// @notice Allows the owner to unpause the contract
+    function unpause() external onlyOwner {
+        _unpause();
     }
 
     /// @notice Verifies a proof generated using a specific RiscZero guest image
