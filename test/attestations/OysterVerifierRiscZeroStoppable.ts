@@ -19,9 +19,10 @@ describe("OysterVerifierRiscZeroStoppable - Init", function() {
 
   it("deploys", async function() {
     const Contract = await ethers.getContractFactory("OysterVerifierRiscZeroStoppable");
-    const contract = (await Contract.deploy(addrs[10])) as unknown as OysterVerifierRiscZeroStoppable;
+    const contract = (await Contract.deploy(addrs[10], addrs[1])) as unknown as OysterVerifierRiscZeroStoppable;
 
     expect(await contract.VERIFIER()).to.equal(addrs[10]);
+    expect(await contract.owner()).to.equal(addrs[1]);
   });
 });
 
@@ -40,9 +41,10 @@ describe("OysterVerifierRiscZeroStoppable - Verify", function() {
     mock = await Mock.deploy();
 
     const Contract = await ethers.getContractFactory("OysterVerifierRiscZeroStoppable");
-    contract = (await Contract.deploy(await mock.getAddress())) as unknown as OysterVerifierRiscZeroStoppable;
+    contract = (await Contract.deploy(await mock.getAddress(), addrs[1])) as unknown as OysterVerifierRiscZeroStoppable;
 
     expect(await contract.VERIFIER()).to.equal(await mock.getAddress());
+    expect(await contract.owner()).to.equal(addrs[1]);
   });
 
   takeSnapshotBeforeAndAfterEveryTest(async () => { });
@@ -78,9 +80,10 @@ describe("OysterVerifierRiscZeroStoppable - Verify bytes", function() {
     mock = await Mock.deploy();
 
     const Contract = await ethers.getContractFactory("OysterVerifierRiscZeroStoppable");
-    contract = (await Contract.deploy(await mock.getAddress())) as unknown as OysterVerifierRiscZeroStoppable;
+    contract = (await Contract.deploy(await mock.getAddress(), addrs[1])) as unknown as OysterVerifierRiscZeroStoppable;
 
     expect(await contract.VERIFIER()).to.equal(await mock.getAddress());
+    expect(await contract.owner()).to.equal(addrs[1]);
   });
 
   takeSnapshotBeforeAndAfterEveryTest(async () => { });
