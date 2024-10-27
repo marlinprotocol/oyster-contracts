@@ -163,6 +163,16 @@ describe("OysterVerifierRiscZeroStoppable - Verify", function() {
     await expect(contract.verify(id("some image"), addrs[10], id("some journal"), id("some seal"))).to.not.be.reverted;
   });
 
+  it("cannot verify if contract is paused", async function() {
+    await mock.setFail(false);
+    await mock.setExpectedDecodedCall(id("some image"), addrs[10], id("some journal"), id("some seal"));
+    await contract.connect(signers[1]).pause();
+
+    await expect(
+      contract.verify(id("some image"), addrs[10], id("some journal"), id("some seal")),
+    ).to.be.revertedWithCustomError(contract, "EnforcedPause");
+  });
+
   it("reverts if verifier reverts", async function() {
     await mock.setFail(true);
 
@@ -206,6 +216,19 @@ describe("OysterVerifierRiscZeroStoppable - Verify bytes", function() {
     await mock.setExpectedEncodedCall(encodedBytes);
 
     await expect(contract.verify(encodedBytes)).to.not.be.reverted;
+  });
+
+  it("cannot verify if contract is paused", async function() {
+    let encodedBytes = AbiCoder.defaultAbiCoder().encode(
+      ["bytes32", "address", "bytes32", "bytes"],
+      [id("some image"), addrs[10], id("some journal"), id("some seal")],
+    );
+
+    await mock.setFail(false);
+    await mock.setExpectedEncodedCall(encodedBytes);
+    await contract.connect(signers[1]).pause();
+
+    await expect(contract.verify(encodedBytes)).to.be.revertedWithCustomError(contract, "EnforcedPause");
   });
 
   it("reverts if verifier reverts", async function() {
