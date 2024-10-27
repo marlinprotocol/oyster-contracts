@@ -1,4 +1,4 @@
-import { id, Signer, AbiCoder, Contract } from "ethers";
+import { id, Signer, AbiCoder, Contract, ZeroAddress } from "ethers";
 import { ethers } from "hardhat";
 import { expect } from "chai";
 
@@ -23,6 +23,12 @@ describe("OysterVerifierRiscZeroStoppable - Init", function() {
 
     expect(await contract.VERIFIER()).to.equal(addrs[10]);
     expect(await contract.owner()).to.equal(addrs[1]);
+  });
+
+  it("does not deploy with zero owner", async function() {
+    const Contract = await ethers.getContractFactory("OysterVerifierRiscZeroStoppable");
+
+    await expect(Contract.deploy(addrs[10], ZeroAddress)).to.be.revertedWithCustomError(Contract, "OwnableInvalidOwner");
   });
 });
 
