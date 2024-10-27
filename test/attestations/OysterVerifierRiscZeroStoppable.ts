@@ -23,6 +23,7 @@ describe("OysterVerifierRiscZeroStoppable - Init", function() {
 
     expect(await contract.VERIFIER()).to.equal(addrs[10]);
     expect(await contract.owner()).to.equal(addrs[1]);
+    expect(await contract.paused()).to.equal(false);
   });
 
   it("does not deploy with zero owner", async function() {
@@ -51,6 +52,7 @@ describe("OysterVerifierRiscZeroStoppable - Verify", function() {
 
     expect(await contract.VERIFIER()).to.equal(await mock.getAddress());
     expect(await contract.owner()).to.equal(addrs[1]);
+    expect(await contract.paused()).to.equal(false);
   });
 
   takeSnapshotBeforeAndAfterEveryTest(async () => { });
@@ -90,6 +92,7 @@ describe("OysterVerifierRiscZeroStoppable - Verify bytes", function() {
 
     expect(await contract.VERIFIER()).to.equal(await mock.getAddress());
     expect(await contract.owner()).to.equal(addrs[1]);
+    expect(await contract.paused()).to.equal(false);
   });
 
   takeSnapshotBeforeAndAfterEveryTest(async () => { });
