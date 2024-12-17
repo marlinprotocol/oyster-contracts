@@ -263,8 +263,7 @@ contract GatewayJobs is
         uint8 _sequenceId,
         address _jobOwner,
         uint8 _env,
-        uint256 _signTimestamp,
-        address _gateway
+        uint256 _signTimestamp
     ) internal {
         if (block.timestamp > _jobRequestTimestamp + RELAY_BUFFER_TIME) revert GatewayJobsRelayTimeOver();
         if (relayJobs[_jobId].isResourceUnavailable) revert GatewayJobsResourceUnavailable();
@@ -290,7 +289,7 @@ contract GatewayJobs is
 
         // reserve execution fee from gateway
         uint256 usdcDeposit = _deadline * JOB_MANAGER.getJobExecutionFeePerMs(_env);
-        USDC_TOKEN.safeTransferFrom(_gateway, address(this), usdcDeposit);
+        USDC_TOKEN.safeTransferFrom(GATEWAYS.getOwner(enclaveAddress), address(this), usdcDeposit);
 
         _createJob(
             _jobId,
@@ -332,7 +331,7 @@ contract GatewayJobs is
                 // Resource unavailable
                 relayJobs[_jobId].isResourceUnavailable = true;
                 // Refund the USDC deposit
-                USDC_TOKEN.safeTransfer(_gateway, _usdcDeposit);
+                USDC_TOKEN.safeTransfer(GATEWAYS.getOwner(_gateway), _usdcDeposit);
 
                 emit JobResourceUnavailable(_jobId, _gateway);
                 return;
@@ -489,8 +488,7 @@ contract GatewayJobs is
             _sequenceId,
             _jobOwner,
             _env,
-            _signTimestamp,
-            _msgSender()
+            _signTimestamp
         );
     }
 
