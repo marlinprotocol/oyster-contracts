@@ -2,12 +2,12 @@
 
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts/utils/Context.sol";
-import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
-import "./AttestationAuther.sol";
+import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import {Context} from "@openzeppelin/contracts/utils/Context.sol";
+import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+import {AttestationAuther} from "./AttestationAuther.sol";
+import {IAttestationVerifier} from "./interfaces/IAttestationVerifier.sol";
 
 contract AttestationAutherSample is
     Context, // _msgSender, _msgData
@@ -55,11 +55,11 @@ contract AttestationAutherSample is
     //-------------------------------- Admin methods start --------------------------------//
 
     function whitelistEnclaveImage(
-        bytes memory PCR0,
-        bytes memory PCR1,
-        bytes memory PCR2
+        bytes memory pcr0,
+        bytes memory pcr1,
+        bytes memory pcr2
     ) external onlyRole(DEFAULT_ADMIN_ROLE) returns (bytes32, bool) {
-        return _whitelistEnclaveImage(EnclaveImage(PCR0, PCR1, PCR2));
+        return _whitelistEnclaveImage(EnclaveImage(pcr0, pcr1, pcr2));
     }
 
     function revokeEnclaveImage(bytes32 imageId) external onlyRole(DEFAULT_ADMIN_ROLE) returns (bool) {

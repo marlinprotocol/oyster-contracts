@@ -2,13 +2,13 @@
 
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "./lock/LockUpgradeable.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
+import {ERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
+import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {LockUpgradeable} from "./lock/LockUpgradeable.sol";
 
 contract MarketV1 is
     Initializable, // initializer
@@ -19,6 +19,7 @@ contract MarketV1 is
     LockUpgradeable // time locks
 {
     // in case we add more contracts in the inheritance chain
+    // solhint-disable-next-line var-name-mixedcase
     uint256[500] private __gap_0;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -38,12 +39,14 @@ contract MarketV1 is
         return super.supportsInterface(interfaceId);
     }
 
+    // solhint-disable-next-line no-empty-blocks
     function _authorizeUpgrade(address /*account*/) internal view override onlyRole(DEFAULT_ADMIN_ROLE) {}
 
     //-------------------------------- Overrides end --------------------------------//
 
     //-------------------------------- Initializer start --------------------------------//
 
+    // solhint-disable-next-line var-name-mixedcase
     uint256[50] private __gap_1;
 
     error MarketV1InitLengthMismatch();
@@ -77,6 +80,7 @@ contract MarketV1 is
 
     mapping(address => Provider) public providers;
 
+    // solhint-disable-next-line var-name-mixedcase
     uint256[49] private __gap_2;
 
     error MarketV1ProviderNotFound();
@@ -146,6 +150,7 @@ contract MarketV1 is
     IERC20 public token;
     uint256 public constant EXTRA_DECIMALS = 12;
 
+    // solhint-disable-next-line var-name-mixedcase
     uint256[47] private __gap_3;
 
     error MarketV1JobOnlyOwner();
